@@ -1,4 +1,3 @@
-
 /**
  * Defines the alphabet used by the Enigma machine.
  * Provides mapping between characters and their numeric indices,
@@ -18,57 +17,62 @@ public class Alphabet {
             throw new IllegalArgumentException("Alphabet cannot be null or empty");
         }
 
-        // removing whitespaces inside the alphabet string (rawAlphabet)
+        // Removing whitespaces inside the alphabet string (rawAlphabet)
         String clean = rawAlphabet.chars()
                 .mapToObj(c -> (char) c)
                 .filter(c -> !Character.isWhitespace(c))
                 .map(String::valueOf)
                 .collect(Collectors.joining());
 
-        //convert to list of characters
+        // Convert to list of characters
         this.symbols = clean.chars()
                 .mapToObj(c -> (char) c)
                 .collect(Collectors.toList());
 
-        //check for duplicates using set
+        // Check for duplicates using set
         Set<Character> charSet = new HashSet<>(symbols);
-        if (charSet.stream() != symbols.size()) {
+        if (charSet.size() != symbols.size()) {
             throw new IllegalArgumentException("Alphabet contains invalid symbols");
         }
 
-        //mapping char to index
+        // Mapping char to index
         this.charToIndex = new HashMap<>();
         int index = 0;
         for (char c : symbols) {
             charToIndex.put(c, index++);
         }
+    }
 
-        public int size () {
-            return symbols.size();
-        }
+    // Return the number of symbols in the alphabet
+    public int size() {
+        return symbols.size();
+    }
 
-        // return the index of the given character
-        public int toIndex ( char c){
-            return Optional.ofNullable(charToIndex.get(c))
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Character '" + c + "' is not part of this alphabet"));
-        }
+    // Return the index of the given character
+    public int toIndex(char c) {
+        return Optional.ofNullable(charToIndex.get(c))
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Character '" + c + "' is not part of this alphabet"));
+    }
 
-        //return the character of the given index
-        public char toChar (inr index){
-            return Optional.of(index)
-                    .filter(index -> index >= 0 && index < symbols.size())
-                    .map(symbols::get)
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Index " + index + " is out of range (0.." + (symbols.size() - 1) + ")"));
-        }
-        public boolean contains(char c) {
-            return charToIndex.containsKey(c);
-        }
-        public String asString() {
-            return symbols.stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining());
-        }
+    // Return the character of the given index
+    public char toChar(int index) {
+        return Optional.of(index)
+                .filter(i -> i >= 0 && i < symbols.size())
+                .map(symbols::get)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Index " + index + " is out of range (0.." + (symbols.size() - 1) + ")"));
+    }
+
+    // Checks whether a given character exists in the alphabet
+    public boolean contains(char c) {
+        return charToIndex.containsKey(c);
+    }
+
+    // Returns the entire alphabet as a single continuous string
+    public String asString() {
+        return symbols.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining());
     }
 }
