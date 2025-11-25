@@ -1,4 +1,3 @@
-
 /**
  * Represents the Enigma reflector.
  * Provides a fixed, symmetric mapping that redirects the signal

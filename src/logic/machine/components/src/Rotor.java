@@ -1,4 +1,3 @@
-
 /**
  * Represents a single Enigma rotor.
  * Contains the forward and backward wiring, notch position,
@@ -7,4 +6,108 @@
 package logic.machine.components.src;
 
 public class Rotor {
+    private final int id;
+    private int position;
+    private final int notchPosition;
+    private final int[] forwardMapping;
+    private final int[] backwardMapping;
+    private final int alphabetSize;
+
+    public Rotor(int id, int[] forwardMapping, int notchPosition, int initialPosition) {
+        if (forwardMapping == null || forwardMapping.length == 0) {
+            throw new IllegalArgumentException("Rotor mapping cannot be null or empty");
+        }
+
+        this.id = id;
+        this.alphabetSize = forwardMapping.length;
+
+        // Validate that mapping is a proper permutation
+        validateMapping(forwardMapping, alphabetSize);
+
+        // Keep our own defensive copies
+        this.forwardMapping = forwardMapping.clone();
+        this.backwardMapping = buildBackwardMapping(this.forwardMapping, alphabetSize);
+
+        // Validate notch position
+        if (notchPosition < 0 || notchPosition >= alphabetSize) {
+            throw new IllegalArgumentException(
+                    "Notch position out of range: " + notchPosition +
+                            " (valid: 0.." + (alphabetSize - 1) + ")"
+            );
+        }
+        this.notchPosition = notchPosition;
+
+        // Validate and normalize initial position
+        if (initialPosition < 0 || initialPosition >= alphabetSize) {
+            throw new IllegalArgumentException(
+                    "Initial position out of range: " + initialPosition +
+                            " (valid: 0.." + (alphabetSize - 1) + ")"
+            );
+        }
+        this.position = initialPosition;
+    }
+
+    // Ensures the mapping is a valid permutation where each output index appears once
+    private void validateMapping(int[] mapping, int size) {
+        boolean[] seen = new boolean[size];
+
+        for (int i = 0; i < size; i++) {
+            int target = mapping[i];
+
+            if (target < 0 || target >= size) {
+                throw new IllegalArgumentException(
+                        "Rotor mapping out of range: mapping[" + i + "] = " + target
+                );
+            }
+
+            if (seen[target]) {
+                throw new IllegalArgumentException(
+                        "Rotor mapping is not a permutation. Value " + target +
+                                " appears more than once."
+                );
+            }
+            seen[target] = true;
+        }
+    }
+
+    // Builds the inverse (backward) mapping of the given forward mapping
+    private int[] buildBackwardMapping(int[] forward, int size) {
+        int[] backward = new int[size];
+
+        for (int i = 0; i < size; i++) {
+            int j = forward[i];
+            backward[j] = i;
+        }
+        return backward;
+    }
+
+    //  Advances the rotor by one position
+    public boolean step() {
+        position = (position + 1) % alphabetSize;
+        return position == notchPosition;
+    }
+
+    // Maps an input index through the rotor in the forward direction
+    public int mapForward(int index) {
+        // adjust for current position
+        int shifted = (index + position) % alphabetSize;
+
+        // pass through wiring
+        int wired = forwardMapping[shifted];
+
+        // revert the positional shift
+        return (wired - position + alphabetSize) % alphabetSize;
+    }
+
+    // Maps an input index through the rotor in the backward direction
+    public int mapBackward(int index) {
+        // adjust for current position
+        int shifted = (index + position) % alphabetSize;
+
+        // pass through inverse wiring
+        int wired = backwardMapping[shifted];
+
+        // revert the shift
+        return (wired - position + alphabetSize) % alphabetSize;
+    }
 }
