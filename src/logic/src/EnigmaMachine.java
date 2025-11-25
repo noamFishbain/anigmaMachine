@@ -1,3 +1,5 @@
+package logic.src;
+
 /**
  * Represents the complete Enigma machine.
  * Coordinates the flow of characters through the rotors, reflector,
