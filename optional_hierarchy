@@ -1,0 +1,35 @@
+anigmaMachine/
+└── src/
+    └── main/
+        └── java/
+            └── patmal/course/enigma/
+                ├── ui/
+                │   ├── Main.java
+                │   ├── ConsoleApp.java
+                │   ├── ConsoleMenu.java
+                │   └── ConsoleInputReader.java
+                │
+                └── logic/
+                    ├── machine/
+                    │   ├── EnigmaMachine.java
+                    │   └── components/
+                    │       ├── Alphabet.java
+                    │       ├── Rotor.java
+                    │       ├── Reflector.java
+                    │       └── Plugboard.java     (נוסיף בהמשך)
+                    │
+                    ├── config/
+                    │   ├── EnigmaCodeConfiguration.java
+                    │   └── RotorSelection.java
+                    │
+                    ├── loader/
+                    │   ├── MachineConfigLoader.java
+                    │   ├── XmlMachineConfigLoader.java
+                    │   └── dto/
+                    │       ├── MachineDescriptor.java
+                    │       ├── RotorDescriptor.java
+                    │       └── ReflectorDescriptor.java
+                    │
+                    └── engine/
+                        ├── EnigmaEngine.java
+                        └── EnigmaEngineImpl.java
