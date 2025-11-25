@@ -7,11 +7,11 @@ package logic.machine.components.src;
 
 public class Rotor {
     private final int id;
-    private int position;
-    private final int notchPosition;
-    private final int[] forwardMapping;
-    private final int[] backwardMapping;
-    private final int alphabetSize;
+    private int position; // The rotor's current rotational offset (changes every time the rotor steps)
+    private final int notchPosition; // The notch position at which this rotor triggers the next rotor to advance
+    private final int[] forwardMapping; // Forward wiring: maps input index to output index
+    private final int[] backwardMapping; // Backward wiring: the inverse of forwardMapping
+    private final int alphabetSize; // Total number of symbols the rotor supports
 
     public Rotor(int id, int[] forwardMapping, int notchPosition, int initialPosition) {
         if (forwardMapping == null || forwardMapping.length == 0) {
