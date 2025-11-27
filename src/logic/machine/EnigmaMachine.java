@@ -6,4 +6,25 @@ package logic.machine;
  * Handles stepping logic and provides the main encryption interface.
  */
 public class EnigmaMachine {
+
+    private int processedMessages = 0;
+
+    //Tal i made it because i need it in Enigmaengineimpl class
+    public EnigmaMachine(MachineDescriptor descriptor) {
+        // TODO: build internal machine model from descriptor:
+        //  - alphabet
+        //  - rotors
+        //  - reflectors
+        // For now, we only initialize the message counter.
+        this.processedMessages = 0;
+    }
+
+    public int getProcessedMessages() {
+        return processedMessages;
+    }
+
+    public void incrementProcessedMessages() {
+        processedMessages++;
+    }
+
 }
