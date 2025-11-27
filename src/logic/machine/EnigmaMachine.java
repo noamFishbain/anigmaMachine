@@ -1,4 +1,4 @@
-package logic.src;
+package logic.machine;
 
 /**
  * Represents the complete Enigma machine.
