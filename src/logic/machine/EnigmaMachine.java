@@ -1,7 +1,4 @@
 package logic.machine;
-
-import logic.loader.dto.MachineDescriptor;
-
 /**
  * Represents the complete Enigma machine.
  * Coordinates the flow of characters through the rotors, reflector,
