@@ -4,7 +4,7 @@ anigmaMachine/
         └── java/
             └── patmal/course/enigma/
                 ├── ui/
-                │   ├── Main.java
+                │   ├── ui.Main.java
                 │   ├── ConsoleApp.java
                 │   ├── ConsoleMenu.java
                 │   └── ConsoleInputReader.java
