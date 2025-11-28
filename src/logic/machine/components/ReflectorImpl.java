@@ -3,24 +3,26 @@
  * Provides a fixed, symmetric mapping that redirects the signal
  * back through the rotors in reverse. Has no moving parts.
  */
-package logic.machine.components.src;
+package logic.machine.components;
 
-public class Reflector {
+public class ReflectorImpl implements Reflector {
 
     // Reflection mapping: for each index i, reflectionMapping[i] = paired index
     private final int[] reflectionMapping;
 
-    public Reflector(int[] reflectionMapping) {
+    public ReflectorImpl(int[] reflectionMapping) {
         validateMapping(reflectionMapping);     // ensure mapping is legal
         this.reflectionMapping = reflectionMapping.clone(); // keep internal copy
     }
 
      // Return total number of symbols handled by the reflector
-    public int getAlphabetSize() {
+     @Override
+     public int getKeyboardSize() {
         return reflectionMapping.length;
     }
 
     // Returns the paired index for the given index.
+    @Override
     public int getPairedIndex(int index) {
         if (index < 0 || index >= reflectionMapping.length) {
             throw new IllegalArgumentException(
@@ -31,27 +33,27 @@ public class Reflector {
     }
 
     // Factory method to create a basic reflector where:
-    public static Reflector createBasicReflector(int alphabetSize) { // Before XML use
-        if (alphabetSize <= 0) {
+    public static ReflectorImpl createBasicReflector(int keyboardSize) { // Before XML use
+        if (keyboardSize <= 0) {
             throw new IllegalArgumentException(
-                    "Alphabet size must be positive."
+                    "keyboard size must be positive."
             );
         }
-        if (alphabetSize % 2 != 0) {
+        if (keyboardSize % 2 != 0) {
             throw new IllegalArgumentException(
-                    "Alphabet size must be even (required for pairing)."
+                    "keyboard size must be even (required for pairing)."
             );
         }
 
-        int[] mapping = new int[alphabetSize];
+        int[] mapping = new int[keyboardSize];
 
         // Pair indexes
-        for (int i = 0; i < alphabetSize; i += 2) {
+        for (int i = 0; i < keyboardSize; i += 2) {
             mapping[i] = i + 1;
             mapping[i + 1] = i;
         }
 
-        return new Reflector(mapping);
+        return new ReflectorImpl(mapping);
     }
 
     // Validates the reflector mapping

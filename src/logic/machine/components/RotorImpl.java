@@ -3,45 +3,45 @@
  * Contains the forward and backward wiring, notch position,
  * and current rotation offset. Supports stepping and character mapping.
  */
-package logic.machine.components.src;
+package logic.machine.components;
 
-public class Rotor {
+public class RotorImpl implements Rotor {
     private final int id;
     private int position; // The rotor's current rotational offset (changes every time the rotor steps)
     private final int notchPosition; // The notch position at which this rotor triggers the next rotor to advance
     private final int[] forwardMapping; // Forward wiring: maps input index to output index
     private final int[] backwardMapping; // Backward wiring: the inverse of forwardMapping
-    private final int alphabetSize; // Total number of symbols the rotor supports
+    private final int keyboardSize; // Total number of symbols the rotor supports
 
-    public Rotor(int id, int[] forwardMapping, int notchPosition, int initialPosition) {
+    public RotorImpl(int id, int[] forwardMapping, int notchPosition, int initialPosition) {
         if (forwardMapping == null || forwardMapping.length == 0) {
             throw new IllegalArgumentException("Rotor mapping cannot be null or empty");
         }
 
         this.id = id;
-        this.alphabetSize = forwardMapping.length;
+        this.keyboardSize = forwardMapping.length;
 
         // Validate that mapping is a proper permutation
-        validateMapping(forwardMapping, alphabetSize);
+        validateMapping(forwardMapping, keyboardSize);
 
         // Keep our own defensive copies
         this.forwardMapping = forwardMapping.clone();
-        this.backwardMapping = buildBackwardMapping(this.forwardMapping, alphabetSize);
+        this.backwardMapping = buildBackwardMapping(this.forwardMapping, keyboardSize);
 
         // Validate notch position
-        if (notchPosition < 0 || notchPosition >= alphabetSize) {
+        if (notchPosition < 0 || notchPosition >= keyboardSize) {
             throw new IllegalArgumentException(
                     "Notch position out of range: " + notchPosition +
-                            " (valid: 0.." + (alphabetSize - 1) + ")"
+                            " (valid: 0.." + (keyboardSize - 1) + ")"
             );
         }
         this.notchPosition = notchPosition;
 
         // Validate and normalize initial position
-        if (initialPosition < 0 || initialPosition >= alphabetSize) {
+        if (initialPosition < 0 || initialPosition >= keyboardSize) {
             throw new IllegalArgumentException(
                     "Initial position out of range: " + initialPosition +
-                            " (valid: 0.." + (alphabetSize - 1) + ")"
+                            " (valid: 0.." + (keyboardSize - 1) + ")"
             );
         }
         this.position = initialPosition;
@@ -82,32 +82,50 @@ public class Rotor {
     }
 
     //  Advances the rotor by one position
+    @Override
     public boolean step() {
-        position = (position + 1) % alphabetSize;
+        position = (position + 1) % keyboardSize;
         return position == notchPosition;
     }
 
     // Maps an input index through the rotor in the forward direction
+    @Override
     public int mapForward(int index) {
         // adjust for current position
-        int shifted = (index + position) % alphabetSize;
+        int shifted = (index + position) % keyboardSize;
 
         // pass through wiring
         int wired = forwardMapping[shifted];
 
         // revert the positional shift
-        return (wired - position + alphabetSize) % alphabetSize;
+        return (wired - position + keyboardSize) % keyboardSize;
     }
 
     // Maps an input index through the rotor in the backward direction
+    @Override
     public int mapBackward(int index) {
         // adjust for current position
-        int shifted = (index + position) % alphabetSize;
+        int shifted = (index + position) % keyboardSize;
 
         // pass through inverse wiring
         int wired = backwardMapping[shifted];
 
         // revert the shift
-        return (wired - position + alphabetSize) % alphabetSize;
+        return (wired - position + keyboardSize) % keyboardSize;
+    }
+
+    @Override
+    public int getId() {
+        return id;
+    }
+
+    @Override
+    public int getPosition() {
+        return position;
+    }
+
+    @Override
+    public int getAlphabetSize() {
+        return keyboardSize;
     }
 }
