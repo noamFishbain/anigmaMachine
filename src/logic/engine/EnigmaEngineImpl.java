@@ -13,18 +13,20 @@ package logic.engine;
 import logic.loader.MachineConfigLoader;
 import logic.loader.XmlMachineConfigLoader;
 import logic.loader.dto.MachineDescriptor;
-import logic.machine.EnigmaMachine;
+import logic.machine.Machine;
+import logic.machine.MachineImpl;
 
 public class EnigmaEngineImpl implements EnigmaEngine {
-   private MachineDescriptor descriptor;
-   private EnigmaMachine machine;
-
+    private MachineDescriptor descriptor;
+    private Machine machine;
 
     @Override
     public void loadMachineFromXml(String path) throws Exception {
         MachineConfigLoader loader = new XmlMachineConfigLoader();
         this.descriptor = loader.load(path);
-        this.machine = new EnigmaMachine(descriptor); // בניית מודל פנימי
+
+        // Build internal machine model from descriptor
+        this.machine = new MachineImpl(descriptor);
     }
 
     /**
@@ -67,11 +69,8 @@ public class EnigmaEngineImpl implements EnigmaEngine {
             throw new IllegalStateException("Machine is not loaded.");
         }
 
-        // Increment processed message counter
-        machine.incrementProcessedMessages();
-
-        // TODO: Implement real encryption later
-        return text; // temporary behavior
+        // Delegate processing to the machine
+        return machine.process(text);
     }
 
     /**
@@ -81,6 +80,9 @@ public class EnigmaEngineImpl implements EnigmaEngine {
      */
     @Override
     public void reset() {
-        // TODO: implement when originalCode + currentCode exist
+        if (machine == null) {
+            throw new IllegalStateException("Machine is not loaded.");
+        }
+        machine.resetToInitialCode();
     }
 }
