@@ -1,1 +1,18 @@
+# IntelliJ project files
+.idea/
+*.iml
+
+# Compiled class files
+out/
+target/
+*.class
+
+# macOS system files
 .DS_Store
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
