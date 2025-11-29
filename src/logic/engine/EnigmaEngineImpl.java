@@ -1,3 +1,11 @@
+package logic.engine;
+
+import logic.loader.MachineConfigLoader;
+import logic.loader.XmlMachineConfigLoader;
+import logic.loader.dto.MachineDescriptor;
+import logic.machine.Machine;
+import logic.machine.MachineImpl;
+
 /**
  * Implementation of the EnigmaEngine interface.
  * This class coordinates between the UI and the internal EnigmaMachine model.
@@ -7,18 +15,11 @@
  *  - Processing text (encryption/decryption)
  *  - Resetting machine state
  */
-
-package logic.engine;
-
-import logic.loader.MachineConfigLoader;
-import logic.loader.XmlMachineConfigLoader;
-import logic.loader.dto.MachineDescriptor;
-import logic.machine.Machine;
-import logic.machine.MachineImpl;
-
 public class EnigmaEngineImpl implements EnigmaEngine {
-    private MachineDescriptor descriptor;
-    private Machine machine;
+    private MachineDescriptor descriptor; // Static description of the machine - loaded from XML
+    private Machine machine; // Runtime machine instance used to actually process text
+    private CodeConfiguration originalCode; // The code that was last chosen by the user (manual/automatic)
+    private CodeConfiguration currentCode; // The code after rotor stepping during processing
 
     public EnigmaEngineImpl() {
         // Default: build a simple hard-coded machine
@@ -33,45 +34,65 @@ public class EnigmaEngineImpl implements EnigmaEngine {
 
         // Build internal machine model from descriptor
         this.machine = new MachineImpl(descriptor);
+
+        // Whenever we load a new machine configuration, we reset code information
+        this.originalCode = null;
+        this.currentCode = null;
     }
 
-    /**
-     * Returns a summary of the machine's runtime state and configuration details.
-     * This is used by the UI to display the "machine status" command.
-     */
+    @Override
+    public void setManualCode() {
+        // TODO:
+        //  - Read rotor IDs, order, positions and reflector from the UI layer
+        //  - Validate against descriptor (rotor IDs, alphabet, reflector ID)
+        //  - Build a new CodeConfiguration and update both originalCode and currentCode
+        //
+        // For the current milestone we simply clear any existing code.
+        this.originalCode = null;
+        this.currentCode = null;
+    }
+
+    @Override
+    public void setAutomaticCode() {
+        // TODO (next phases):
+        //  - Randomly choose rotor IDs (no duplicates)
+        //  - Randomly choose their order
+        //  - Randomly choose starting positions (letters from the alphabet)
+        //  - Randomly choose a reflector
+        //  - Build CodeConfiguration and update originalCode + currentCode
+        //
+        // For now we just behave like "no code set yet".
+        this.originalCode = null;
+        this.currentCode = null;
+    }
+
+    // Returns a summary of the machine's runtime state and configuration details
     @Override
     public MachineSpecs getMachineSpecs() {
         if (machine == null) {
             throw new IllegalStateException("Machine is not loaded.");
         }
 
-        // מכונה פשוטה תמיד משתמשת ב-MachineImpl.getSpecs()
-        return machine.getSpecs();
-    }
-
-  /*  @Override
-    public MachineSpecs getMachineSpecs() {
-
-        if (descriptor == null || machine == null) {
-            throw new IllegalStateException("Machine has not been loaded yet.");
-        }
-
-        // If we have descriptor from XML - use it
-        // If not - fall back to simple machine assumptions
+        // If we have descriptor from XML – use real values.
+        // Otherwise, fall back to the simple machine assumptions (3 rotors, 1 reflector).
         int totalRotors = (descriptor != null)
                 ? descriptor.getRotors().size()
-                : 3;   // our simple machine uses 3 rotors
+                : 3;
 
         int totalReflectors = (descriptor != null)
                 ? descriptor.getReflectors().size()
-                : 1;   // simple machine: 1 reflector
+                : 1;
 
         int processedMessages = machine.getProcessedMessages();
 
+        // Convert code configurations into compact string format
+        String originalCodeCompact = (originalCode != null)
+                ? originalCode.toCompactString()
+                : null;
 
-        // Code configurations will be implemented later
-        String originalCodeCompact = null;
-        String currentCodeCompact = null;
+        String currentCodeCompact = (currentCode != null)
+                ? currentCode.toCompactString()
+                : null;
 
         return new MachineSpecs(
                 totalRotors,
@@ -80,14 +101,9 @@ public class EnigmaEngineImpl implements EnigmaEngine {
                 originalCodeCompact,
                 currentCodeCompact
         );
-    }*/
+    }
 
-    /**
-     * Processes the given text using the Enigma machine.
-     * At this stage, encryption logic is not yet implemented, so the method
-     * simply validates the machine is loaded, increments the message counter,
-     * and returns the input as-is (echo behavior).
-     */
+    // Processes the given text using the Enigma machine
     @Override
     public String process(String text) {
 
@@ -96,19 +112,35 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         }
 
         // Delegate processing to the machine
-        return machine.process(text);
+        String output = machine.process(text);
+
+        // TODO (later):
+        //  - After MachineImpl exposes its current rotor positions,
+        //    we will update 'currentCode' here based on the new positions.
+        //    Something like:
+        //       List<Character> newPositions = machine.getRotorWindowLetters();
+        //       if (originalCode != null) {
+        //           currentCode = originalCode.withRotorPositions(newPositions);
+        //       }
+
+        return output;
     }
 
-    /**
-     * Resets the machine to its original configuration.
-     * Since code configuration is not yet implemented, this method currently
-     * performs no operation but provides the required API.
-     */
+    // Resets the machine to its original configuration
     @Override
     public void reset() {
         if (machine == null) {
             throw new IllegalStateException("Machine is not loaded.");
         }
+
+        // Reset machine's internal state
         machine.resetToInitialCode();
+
+        // Reset code configuration: go back from currentCode to originalCode
+        if (originalCode != null) {
+            currentCode = originalCode;
+        } else {
+            currentCode = null;
+        }
     }
 }

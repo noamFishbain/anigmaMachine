@@ -8,7 +8,9 @@ public class XmlMachineConfigLoader implements  MachineConfigLoader {
 
     @Override
     public MachineDescriptor load(String filePath) throws Exception {
+        // Validate path exists, ends with .xml, accessible
         validatePath(filePath);
+
         // JAXB later to transfer the data from the XML file
         return null;
     }
