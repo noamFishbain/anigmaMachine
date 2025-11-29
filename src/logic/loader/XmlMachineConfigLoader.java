@@ -13,7 +13,7 @@ public class XmlMachineConfigLoader implements  MachineConfigLoader {
         return null;
     }
     private void validatePath(String path) throws Exception {
-        if (path == null || path.isBlank())
+        if (path == null || path.trim().isEmpty())
             throw new Exception("Path cannot be empty.");
         if (!path.endsWith(".xml"))
             throw new Exception("File must be .xml");

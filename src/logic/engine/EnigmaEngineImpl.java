@@ -20,6 +20,12 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     private MachineDescriptor descriptor;
     private Machine machine;
 
+    public EnigmaEngineImpl() {
+        // Default: build a simple hard-coded machine
+        this.machine = new MachineImpl();
+        this.descriptor = null; // no XML yet
+    }
+
     @Override
     public void loadMachineFromXml(String path) throws Exception {
         MachineConfigLoader loader = new XmlMachineConfigLoader();
@@ -35,13 +41,33 @@ public class EnigmaEngineImpl implements EnigmaEngine {
      */
     @Override
     public MachineSpecs getMachineSpecs() {
+        if (machine == null) {
+            throw new IllegalStateException("Machine is not loaded.");
+        }
+
+        // מכונה פשוטה תמיד משתמשת ב-MachineImpl.getSpecs()
+        return machine.getSpecs();
+    }
+
+  /*  @Override
+    public MachineSpecs getMachineSpecs() {
 
         if (descriptor == null || machine == null) {
             throw new IllegalStateException("Machine has not been loaded yet.");
         }
-        int totalRotors = descriptor.getRotors().size();
-        int totalReflectors = descriptor.getReflectors().size();
+
+        // If we have descriptor from XML - use it
+        // If not - fall back to simple machine assumptions
+        int totalRotors = (descriptor != null)
+                ? descriptor.getRotors().size()
+                : 3;   // our simple machine uses 3 rotors
+
+        int totalReflectors = (descriptor != null)
+                ? descriptor.getReflectors().size()
+                : 1;   // simple machine: 1 reflector
+
         int processedMessages = machine.getProcessedMessages();
+
 
         // Code configurations will be implemented later
         String originalCodeCompact = null;
@@ -54,7 +80,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
                 originalCodeCompact,
                 currentCodeCompact
         );
-    }
+    }*/
 
     /**
      * Processes the given text using the Enigma machine.
