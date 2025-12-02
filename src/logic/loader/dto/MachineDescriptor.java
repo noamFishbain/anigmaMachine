@@ -1,6 +1,9 @@
 package logic.loader.dto;
 
+import logic.machine.components.Rotor;
+
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a high-level description of the Enigma machine as loaded
@@ -15,10 +18,10 @@ import java.util.List;
  */
 public class MachineDescriptor {
 
-    private final String alphabet;
-    private final List<RotorDescriptor> rotors;
-    private final List<ReflectorDescriptor> reflectors;
-    private final int requiredRotorCount;
+    private  String alphabet;
+    private  List<RotorDescriptor> rotors;
+    private  List<ReflectorDescriptor> reflectors;
+    private  int requiredRotorCount;
 
     public MachineDescriptor(String alphabet,
                              List<RotorDescriptor> rotors,
@@ -28,6 +31,10 @@ public class MachineDescriptor {
         this.rotors = rotors;
         this.reflectors = reflectors;
         this.requiredRotorCount = requiredRotorCount;
+    }
+
+    public MachineDescriptor() {
+
     }
 
     public String getAlphabet() {
@@ -44,5 +51,16 @@ public class MachineDescriptor {
 
     public int getRequiredRotorCount() {
         return requiredRotorCount;
+    }
+
+    public void setABC(String alphabet) {
+        this.alphabet = alphabet;
+    }
+
+    public void setRotors(List<RotorDescriptor> rotors) {
+        this.rotors = rotors;
+    }
+    public void setReflectors(List<ReflectorDescriptor> reflectors) {
+        this.reflectors = reflectors;
     }
 }

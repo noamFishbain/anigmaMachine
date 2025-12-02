@@ -2,8 +2,8 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <option name="USE_RELEASE_OPTION" value="false" />
-    <bytecodeTargetLevel target="8">
-      <module name="anigmaMachine" target="8" />
+    <bytecodeTargetLevel target="21">
+      <module name="anigmaMachine" target="21" />
     </bytecodeTargetLevel>
   </component>
 </project>

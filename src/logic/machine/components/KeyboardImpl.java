@@ -80,4 +80,9 @@ public class KeyboardImpl implements Keyboard {
                 .map(String::valueOf)
                 .collect(Collectors.joining());
     }
+
+    @Override
+    public CharSequence getABC() {
+        return asString();
+    }
 }

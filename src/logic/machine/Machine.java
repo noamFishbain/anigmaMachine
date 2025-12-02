@@ -1,6 +1,8 @@
 package logic.machine;
 
 import logic.engine.MachineSpecs;
+
+import java.util.List;
 // import logic.loader.dto.MachineDescriptor; // אם את משתמשת בזה
 
 public interface Machine {
@@ -19,6 +21,7 @@ public interface Machine {
 
     int getProcessedMessages();
 
+    List<Character> getCurrentRotorPositions();
     // Return machine specs for the UI/engine
     MachineSpecs getSpecs();
 }

@@ -2,12 +2,16 @@ package logic.machine;
 
 import logic.engine.MachineSpecs;
 import logic.loader.dto.MachineDescriptor;
+import logic.loader.dto.ReflectorDescriptor;
+import logic.loader.dto.RotorDescriptor;
 import logic.machine.components.Keyboard;
 import logic.machine.components.KeyboardImpl;
 import logic.machine.components.Rotor;
 import logic.machine.components.RotorImpl;
 import logic.machine.components.Reflector;
 import logic.machine.components.ReflectorImpl;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 
@@ -37,8 +41,69 @@ public class MachineImpl implements Machine {
      * @param descriptor machine structure loaded from XML
      */
     public MachineImpl(MachineDescriptor descriptor) {
-        this(); // TODO: replace with real construction that uses descriptor
+        //this();
+    this.keyboard = new KeyboardImpl(descriptor.getAlphabet());
+        this.processedMessages = 0;
+        this.rotors = new ArrayList<>();
+        for(RotorDescriptor rotorDescriptor : descriptor.getRotors()) {
+            int [] mapping = new int[rotorDescriptor.getMapping().size()];
+            for(int i = 0; i < rotorDescriptor.getMapping().size(); i++) {
+                mapping[i] = rotorDescriptor.getMapping().get(i);
+            }
+
+        Rotor rotor = new RotorImpl(
+                rotorDescriptor.getId(),
+                mapping,
+                rotorDescriptor.getNotchPosition(),
+                0
+        );
+            this.rotors.add(rotor);
+        }
+// --- Reflector Initialization Section ---
+
+// 1. Determine the required array size (must match the total ABC length)
+        int alphabetSize = descriptor.getAlphabet().length();
+
+        this.reflector = null; // Initialize
+
+// 2. Iterate over all reflectors defined in the Descriptor
+        for (ReflectorDescriptor reflectorDesc : descriptor.getReflectors()) {
+
+            // Create a new mapping array for this reflector
+            int[] mapping = new int[alphabetSize];
+
+            // (Optional) Initialize with -1 to help detect bugs if a char is left unmapped
+            Arrays.fill(mapping, -1);
+
+            // 3. Fill the mapping array based on the pairs
+            // Note: Reflector mapping is symmetric. If A maps to B, then B must map to A.
+            for (int[] pair : reflectorDesc.getPairs()) {
+                int inputIndex = pair[0];
+                int outputIndex = pair[1];
+
+                // Map both directions
+                mapping[inputIndex] = outputIndex;
+                mapping[outputIndex] = inputIndex;
+            }
+
+            // 4. Create the Reflector object and select the active one
+            // Logic: We pick the first reflector we find, but if we find "I", we override and use it.
+            if (this.reflector == null || reflectorDesc.getId().equals("I")) {
+                this.reflector = new ReflectorImpl(mapping);
+
+                // If we found "I", we can stop searching (priority given to I for this exercise)
+                if (reflectorDesc.getId().equals("I")) {
+                    break;
+                }
+            }
+        }
+
+// 5. Final validation to ensure a reflector was successfully created
+        if (this.reflector == null) {
+            throw new RuntimeException("Error: No reflector could be initialized from the descriptor.");
+        }
     }
+
 
     // Temporary constructor that builds a simple hard-coded Enigma machine
     private void initSimpleMachine() {
@@ -75,6 +140,18 @@ public class MachineImpl implements Machine {
     public int getProcessedMessages() {
 
         return processedMessages;
+    }
+
+    @Override
+    public List<Character> getCurrentRotorPositions() {
+        List<Character> positions = new ArrayList<>();
+        for (Rotor rotor : this.rotors) {
+            int currentIndex = rotor.getPosition();
+
+            char currentLetter = this.keyboard.getABC().charAt(currentIndex);
+            positions.add(currentLetter);
+        }
+        return positions;
     }
 
     // Internal helper: increments the message counter. Called automatically inside the process() method
@@ -173,4 +250,5 @@ public class MachineImpl implements Machine {
                 null               // current code (TODO)
         );
     }
+
 }

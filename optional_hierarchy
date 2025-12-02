@@ -1,35 +1,33 @@
-anigmaMachine/
+EnigmaProject/
 └── src/
-    └── main/
-        └── java/
-            └── patmal/course/enigma/
-                ├── ui/
-                │   ├── ui.Main.java
-                │   ├── ConsoleApp.java
-                │   ├── ConsoleMenu.java
-                │   └── ConsoleInputReader.java
-                │
-                └── logic/
-                    ├── machine/
-                    │   ├── EnigmaMachine.java
-                    │   └── components/
-                    │       ├── Alphabet.java
-                    │       ├── Rotor.java
-                    │       ├── Reflector.java
-                    │       └── Plugboard.java     (נוסיף בהמשך)
-                    │
-                    ├── config/
-                    │   ├── EnigmaCodeConfiguration.java
-                    │   └── RotorSelection.java
-                    │
-                    ├── loader/
-                    │   ├── MachineConfigLoader.java
-                    │   ├── XmlMachineConfigLoader.java
-                    │   └── dto/
-                    │       ├── MachineDescriptor.java
-                    │       ├── RotorDescriptor.java
-                    │       └── ReflectorDescriptor.java
-                    │
-                    └── engine/
-                        ├── EnigmaEngine.java
-                        └── EnigmaEngineImpl.java
+    ├── logic/
+    │   ├── engine/
+    │   │   ├── CodeConfiguration.java
+    │   │   ├── EnigmaEngine.java
+    │   │   ├── EnigmaEngineImpl.java
+    │   │   └── MachineSpecs.java
+    │   │
+    │   ├── loader/
+    │   │   ├── MachineConfigLoader.java
+    │   │   ├── XmlMachineConfigLoader.java
+    │   │   └── dto/
+    │   │       ├── MachineDescriptor.java
+    │   │       ├── ReflectorDescriptor.java
+    │   │       └── RotorDescriptor.java
+    │   │
+    │   └── machine/
+    │       ├── Machine.java
+    │       ├── MachineImpl.java
+    │       └── components/
+    │           ├── Keyboard.java
+    │           ├── KeyboardImpl.java
+    │           ├── Reflector.java
+    │           ├── ReflectorImpl.java
+    │           ├── Rotor.java
+    │           └── RotorImpl.java
+    │
+    └── ui/
+        ├── ConsoleApp.java
+        ├── ConsoleInputReader.java
+        ├── ConsoleMenu.java
+        └── Main.java

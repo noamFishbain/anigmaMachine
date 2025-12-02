@@ -6,6 +6,8 @@ import logic.loader.dto.MachineDescriptor;
 import logic.machine.Machine;
 import logic.machine.MachineImpl;
 
+import java.util.List;
+
 /**
  * Implementation of the EnigmaEngine interface.
  * This class coordinates between the UI and the internal EnigmaMachine model.
@@ -30,10 +32,12 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     @Override
     public void loadMachineFromXml(String path) throws Exception {
         MachineConfigLoader loader = new XmlMachineConfigLoader();
-        this.descriptor = loader.load(path);
+        //this.descriptor = (MachineDescriptor) loader.load(path);
 
         // Build internal machine model from descriptor
-        this.machine = new MachineImpl(descriptor);
+        //this.machine = new MachineImpl(descriptor);
+
+        this.machine = loader.load(path);
 
         // Whenever we load a new machine configuration, we reset code information
         this.originalCode = null;
@@ -114,6 +118,11 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         // Delegate processing to the machine
         String output = machine.process(text);
 
+        List<Character> newPositions = machine.getCurrentRotorPositions();
+
+        if (currentCode != null) {
+            currentCode.setRotorPositions(newPositions);
+        }
         // TODO (later):
         //  - After MachineImpl exposes its current rotor positions,
         //    we will update 'currentCode' here based on the new positions.
