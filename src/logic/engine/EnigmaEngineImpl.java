@@ -5,8 +5,10 @@ import logic.loader.XmlMachineConfigLoader;
 import logic.loader.dto.MachineDescriptor;
 import logic.machine.Machine;
 import logic.machine.MachineImpl;
+import logic.machine.components.Rotor;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of the EnigmaEngine interface.
@@ -44,16 +46,100 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         this.currentCode = null;
     }
 
+    // Sets a manual code configuration based on user input
     @Override
-    public void setManualCode() {
-        // TODO:
-        //  - Read rotor IDs, order, positions and reflector from the UI layer
-        //  - Validate against descriptor (rotor IDs, alphabet, reflector ID)
-        //  - Build a new CodeConfiguration and update both originalCode and currentCode
-        //
-        // For the current milestone we simply clear any existing code.
-        this.originalCode = null;
-        this.currentCode = null;
+    public String setManualCode(String rotorIDsString, String positionsString, int reflectorNum) throws Exception {        if (machine == null) {
+            throw new IllegalStateException("Machine is not loaded. Please load an XML file first.");
+        }
+
+        // Parsing and Basic Validation
+        List<Integer> rotorIDs = parseRotorIDs(rotorIDsString);
+        String reflectorID = convertIntToRoman(reflectorNum);
+        String alphabet = machine.getKeyboard().asString();
+
+        // Validations
+        validateRotorCount(rotorIDs);
+        validateRotorIDs(rotorIDs);
+        validatePositions(positionsString, rotorIDs.size(), alphabet);
+
+        // Position characters must be in the machine's keyboard
+        List<Character> positionsList = positionsString.toUpperCase().chars()
+                .mapToObj(c -> (char) c)
+                .collect(Collectors.toList());
+
+        // Physically configure the machine
+        machine.setConfiguration(rotorIDs, positionsList, reflectorID);
+
+        // Create and save the CodeConfiguration object
+        CodeConfiguration newCode = new CodeConfiguration(rotorIDs, positionsList, reflectorID);
+        this.originalCode = newCode;
+        this.currentCode = newCode;
+        return newCode.toCompactString();
+    }
+
+    private void validateRotorCount(List<Integer> rotorIDs) {
+        // Check exactly 3 Rotors
+        if (rotorIDs.size() != 3) {
+            throw new IllegalArgumentException("Invalid rotor count. Require exactly 3 selected rotors, but got: " + rotorIDs.size());
+        }
+    }
+
+    private void validateRotorIDs(List<Integer> rotorIDs) {
+        // Check uniqueness
+        if (new HashSet<>(rotorIDs).size() != rotorIDs.size()) {
+            throw new IllegalArgumentException("Rotor IDs must be unique. Duplicates found in: " + rotorIDs);
+        }
+
+        // Check existence in machine
+        Map<Integer, Rotor> availableRotors = machine.getAllAvailableRotors();
+        for (int id : rotorIDs) {
+            if (!availableRotors.containsKey(id)) {
+                throw new IllegalArgumentException("Rotor ID " + id + " does not exist in the machine. Available IDs: " + availableRotors.keySet());
+            }
+        }
+    }
+
+    private void validatePositions(String positionsString, int expectedSize, String alphabet) {
+        // Check length
+        if (positionsString.length() != expectedSize) {
+            throw new IllegalArgumentException(
+                    "Rotor count (" + expectedSize + ") must match the number of starting positions (" + positionsString.length() + ")."
+            );
+        }
+
+        // Check alphabet validity
+        for (char pos : positionsString.toUpperCase().toCharArray()) {
+            if (alphabet.indexOf(pos) == -1) {
+                throw new IllegalArgumentException("Position character '" + pos + "' is not part of the machine's alphabet: " + alphabet);
+            }
+        }
+    }
+
+    // Converts a comma-separated string of rotor IDs into a List of Integers.
+    // Also reverses the list because UI input is left to right, but we need right to left order
+    private List<Integer> parseRotorIDs(String s) {
+        if (s == null || s.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Split, trim, and parse to Integer
+        List<Integer> ids = Arrays.stream(s.trim().split(","))
+                .map(String::trim)
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+
+        // The order must be reversed for the machine logic
+        Collections.reverse(ids);
+        return ids;
+    }
+
+    // Converts a decimal reflector number (1-5) into its Roman numeral ID ("I"-"V").
+    private String convertIntToRoman(int num) {
+        if (num < 1 || num > 5) {
+            throw new IllegalArgumentException("Reflector selection must be between 1 and 5.");
+        }
+        String[] roman = {"I", "II", "III", "IV", "V"};
+        return roman[num - 1];
     }
 
     @Override

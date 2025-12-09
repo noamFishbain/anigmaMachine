@@ -1,11 +1,12 @@
 package logic.machine;
 
 import logic.engine.MachineSpecs;
+import logic.machine.components.Keyboard;
 import logic.machine.components.Reflector;
 import logic.machine.components.Rotor;
 
 import java.util.List;
-// import logic.loader.dto.MachineDescriptor; // אם את משתמשת בזה
+import java.util.Map;
 
 public interface Machine {
 
@@ -40,4 +41,11 @@ public interface Machine {
     public int getAllReflectorsCount();
 
 
+
+    // Getters for ALL available components
+    Map<Integer, Rotor> getAllAvailableRotors();
+    Map<String, Reflector> getAllAvailableReflectors();
+
+    // Allows the engine/UI to access the keyboard for ABC validation
+    Keyboard getKeyboard();
 }
