@@ -394,5 +394,20 @@ public class MachineImpl implements Machine {
     public Reflector getActiveReflector() {
         return activeReflector;
     }
+
+    @Override
+    public Map<Integer, Rotor> getAllAvailableRotors() {
+        return allAvailableRotors;
+    }
+
+    @Override
+    public Map<String, Reflector> getAllAvailableReflectors() {
+        return allAvailableReflectors;
+    }
+
+    @Override
+    public Keyboard getKeyboard() {
+        return keyboard;
+    }
 }
 
