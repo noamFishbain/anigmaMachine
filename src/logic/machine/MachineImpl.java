@@ -466,7 +466,7 @@ public class MachineImpl implements Machine {
             case 3: return "III";
             case 4: return "IV";
             case 5: return "V";
-            default: return String.valueOf(id);
+            default: return id;
         }
     }
 

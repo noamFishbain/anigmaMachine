@@ -234,9 +234,9 @@ public class EnigmaEngineImpl implements EnigmaEngine {
             throw new IllegalStateException("Machine is not loaded.");
         }
 
-        if (machine.getActiveRotors() == null || machine.getActiveReflector() == null) {
-            throw new IllegalStateException("Code configuration must be set (P3 or P4) before processing text.");
-        }
+//        if (machine.getActiveRotors() == null || machine.getActiveReflector() == null) {
+//            throw new IllegalStateException("Code configuration must be set (P3 or P4) before processing text.");
+//        }
 
         // Delegate processing to the machine
         String output = machine.process(text);
