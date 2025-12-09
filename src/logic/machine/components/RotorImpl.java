@@ -128,4 +128,12 @@ public class RotorImpl implements Rotor {
     public int getAlphabetSize() {
         return keyboardSize;
     }
+
+    @Override
+    public void setPosition(int newPosition) {
+        if (newPosition < 0 || newPosition >= keyboardSize) {
+            throw new IllegalArgumentException("Position out of range: " + newPosition);
+        }
+        this.position = newPosition;
+    }
 }

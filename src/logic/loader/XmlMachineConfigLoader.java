@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class XmlMachineConfigLoader implements MachineConfigLoader {
 
@@ -43,48 +44,57 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
     private void validateMachineSpecs(BTEEnigma enigma) throws Exception {
         String abc = enigma.getABC().trim();
 
+        // Retrieve necessary lists for validation
+        List<BTERotor> bteRotors = enigma.getBTERotors().getBTERotor();
+        List<BTEReflector> bteReflectors = enigma.getBTEReflectors().getBTEReflector();
+
         // Check if ABC length is even
         if (abc.length() % 2 != 0) {
             throw new Exception("ABC size must be even. Current size: " + abc.length());
         }
 
-        // Check if there are enough rotors defined (Minimum 2 expected)
-        if (enigma.getBTERotors().getBTERotor().size() < 2) {
-            throw new Exception("Not enough rotors defined.");
+        // Check if there are enough rotors defined (Minimum 3 expected)
+        if (enigma.getBTERotors().getBTERotor().size() < 3) {
+            throw new Exception("Not enough rotors defined. Machine must define at least 3 rotors.");
+        }
+
+        // Checks that rotor IDs are unique and form a running sequence (1 to N)
+        List<Integer> rotorIDs = bteRotors.stream()
+                .map(BTERotor::getId)
+                .sorted()
+                .toList();
+
+        for (int i = 0; i < rotorIDs.size(); i++) {
+            if (rotorIDs.get(i) != (i + 1)) {
+                throw new Exception("Rotor IDs must be unique and form a running sequence (1 to N). Missing ID or hole found.");
+            }
+        }
+
+        // Checks that rotor's positioning list matches ABC size (Mapping integrity check)
+        int expectedSize = abc.length();
+        for (BTERotor bteRotor : bteRotors) {
+            if (bteRotor.getBTEPositioning().size() != expectedSize) {
+                throw new Exception("Rotor ID " + bteRotor.getId() + " positioning count does not match ABC size (" + expectedSize + ").");
+            }
+        }
+
+        // Checks that reflector IDs are unique and form a running Roman sequence (I to N)
+        List<Integer> reflectorDecimalIDs = bteReflectors.stream()
+                .map(BTEReflector::getId) // Extract the Roman ID (String)
+                .map(this::convertRomanToInt) // Convert the String to int
+                .sorted()
+                .toList();
+
+        for (int i = 0; i < reflectorDecimalIDs.size(); i++) {
+            if (reflectorDecimalIDs.get(i) != (i + 1)) {
+                throw new Exception("Reflector IDs must be unique and form a running Roman sequence (I to N). Missing ID or hole found.");
+            }
         }
     }
 
     private Machine createMachineFromBTE(BTEEnigma bteEnigma) {
         String abc = bteEnigma.getABC().trim();
-        int abcLength = abc.length();
-
-        // --- 1. Create Rotor Descriptors List ---
-        List<RotorDescriptor> rotorDescriptors = new ArrayList<>();
-
-        for (BTERotor bteRotor : bteEnigma.getBTERotors().getBTERotor()) {
-            int id = bteRotor.getId();
-            int notch = bteRotor.getNotch();
-
-            // Calculate mapping array
-            List<Integer> forwardMapping = new ArrayList<>(Collections.nCopies(abcLength, 0));
-            for (BTEPositioning pos : bteRotor.getBTEPositioning()) {
-                char rightChar = pos.getRight().charAt(0);
-                char leftChar = pos.getLeft().charAt(0);
-                int inputIndex = abc.indexOf(rightChar);
-                int outputIndex = abc.indexOf(leftChar);
-                forwardMapping.set(inputIndex, outputIndex);
-            }
-
-            // Create RotorDescriptor
-            // Assuming RotorDescriptor has a constructor: (int id, int notch, int[] mapping)
-            // If not, use setters:
-            RotorDescriptor descriptor = new RotorDescriptor();
-            descriptor.setId(id);
-            descriptor.setNotchPosition(notch);
-            descriptor.setMapping(forwardMapping); // You might need to add this method to RotorDescriptor
-
-            rotorDescriptors.add(descriptor);
-        }
+        List<RotorDescriptor> rotorDescriptors = getRotorDescriptors(bteEnigma, abc);
 
         // --- 2. Create Reflector Descriptors List ---
         List<ReflectorDescriptor> reflectorDescriptors = new ArrayList<>();
@@ -117,6 +127,39 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
         // --- 4. Return new Machine ---
         // MachineImpl constructor will now take the descriptor and create the actual Logic components
         return new MachineImpl(machineDescriptor);
+    }
+
+    private static List<RotorDescriptor> getRotorDescriptors(BTEEnigma bteEnigma, String abc) {
+        int abcLength =  abc.length();
+
+        // Create Rotor Descriptors List
+        List<RotorDescriptor> rotorDescriptors = new ArrayList<>();
+
+        for (BTERotor bteRotor : bteEnigma.getBTERotors().getBTERotor()) {
+            int id = bteRotor.getId();
+            int notch = bteRotor.getNotch();
+
+            // Calculate mapping array
+            List<Integer> forwardMapping = new ArrayList<>(Collections.nCopies(abcLength, 0));
+            for (BTEPositioning pos : bteRotor.getBTEPositioning()) {
+                char rightChar = pos.getRight().charAt(0);
+                char leftChar = pos.getLeft().charAt(0);
+                int inputIndex = abc.indexOf(rightChar);
+                int outputIndex = abc.indexOf(leftChar);
+                forwardMapping.set(inputIndex, outputIndex);
+            }
+
+            // Create RotorDescriptor
+            // Assuming RotorDescriptor has a constructor: (int id, int notch, int[] mapping)
+            // If not, use setters:
+            RotorDescriptor descriptor = new RotorDescriptor();
+            descriptor.setId(id);
+            descriptor.setNotchPosition(notch);
+            descriptor.setMapping(forwardMapping); // You might need to add this method to RotorDescriptor
+
+            rotorDescriptors.add(descriptor);
+        }
+        return rotorDescriptors;
     }
 
     private int convertRomanToInt(String roman) {

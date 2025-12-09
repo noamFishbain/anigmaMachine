@@ -23,4 +23,7 @@ public interface Rotor {
 
     // Returns total size of the alphabet used by the rotor
     int getAlphabetSize();
+
+    // Sets the rotor's current rotational offset (position) manually
+    void setPosition(int newPosition);
 }
