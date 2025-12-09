@@ -14,8 +14,8 @@ public interface EnigmaEngine {
     // Loads machine structure from XML file
     void loadMachineFromXml(String path) throws Exception;
 
-    // Sets manual code
-    void setManualCode();
+    // Sets a manual code configuration based on user input
+    String setManualCode(String rotorIDsString, String positionsString, int reflectorNum) throws Exception;
 
     // Generates random configuration
     void setAutomaticCode();
