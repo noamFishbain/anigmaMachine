@@ -14,6 +14,9 @@ import logic.machine.components.ReflectorImpl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import static jdk.jfr.internal.management.ManagementSupport.logDebug;
 
@@ -27,8 +30,10 @@ public class MachineImpl implements Machine {
 
     private int processedMessages = 0; // Total number of processed messages
     private Keyboard keyboard; // Keyboard used to map characters to indices and back
-    private List<Rotor> rotors; // Ordered list of rotors
-    private Reflector reflector; // Active reflector used by this machine
+    private List<Rotor> activeRotors; // Ordered list of rotors
+    private Reflector activeReflector; // Active reflector used by this machine
+    private Map<Integer, Rotor> allAvailableRotors; // Map that holds all the valid rotors from the XML
+    private Map<String, Reflector> allAvailableReflectors; // Map that holds all the valid reflectors from the XML
 
     // Temporary constructor that builds a simple hard-coded Enigma machine
     public MachineImpl() {
@@ -36,76 +41,58 @@ public class MachineImpl implements Machine {
     }
 
     /**
-     * Constructor used by the engine.
-     * For now, it delegates to the default constructor and ignores the descriptor.
-     * In the next phase, this will build the machine based on the descriptor content.
+     * Constructor used by the engine. Builds the comprehensive map of all available
+     * rotors and reflectors from the descriptor, preparing the machine for configuration.
+     * The machine starts in an unconfigured state.
      *
      * @param descriptor machine structure loaded from XML
      */
     public MachineImpl(MachineDescriptor descriptor) {
         //this();
-    this.keyboard = new KeyboardImpl(descriptor.getAlphabet());
+        this.keyboard = new KeyboardImpl(descriptor.getAlphabet());
         this.processedMessages = 0;
-        this.rotors = new ArrayList<>();
-        for(RotorDescriptor rotorDescriptor : descriptor.getRotors()) {
-            int [] mapping = new int[rotorDescriptor.getMapping().size()];
-            for(int i = 0; i < rotorDescriptor.getMapping().size(); i++) {
+        this.allAvailableRotors = new HashMap<>();
+        this.allAvailableReflectors = new HashMap<>();
+        this.activeRotors = null;
+        this.activeReflector = null;
+
+        // Build All Available Rotors and populate map
+        int keyboardSize = descriptor.getAlphabet().length();
+        for (RotorDescriptor rotorDescriptor : descriptor.getRotors()) {
+
+            int[] mapping = new int[keyboardSize];
+            for (int i = 0; i < keyboardSize; i++) {
+                // Assuming mapping is index-based in RotorDescriptor (List<Integer>)
                 mapping[i] = rotorDescriptor.getMapping().get(i);
             }
 
-        Rotor rotor = new RotorImpl(
-                rotorDescriptor.getId(),
-                mapping,
-                rotorDescriptor.getNotchPosition(),
-                0
-        );
-            this.rotors.add(rotor);
+            Rotor rotor = new RotorImpl(
+                    rotorDescriptor.getId(),
+                    mapping,
+                    rotorDescriptor.getNotchPosition() - 1, 0 // Starting position is always 0, until set by code
+            );
+            this.allAvailableRotors.put(rotor.getId(), rotor);
         }
-// --- Reflector Initialization Section ---
 
-// 1. Determine the required array size (must match the total ABC length)
-        int alphabetSize = descriptor.getAlphabet().length();
-
-        this.reflector = null; // Initialize
-
-// 2. Iterate over all reflectors defined in the Descriptor
+        // Build All Available Reflectors and populate map
         for (ReflectorDescriptor reflectorDesc : descriptor.getReflectors()) {
 
-            // Create a new mapping array for this reflector
-            int[] mapping = new int[alphabetSize];
-
-            // (Optional) Initialize with -1 to help detect bugs if a char is left unmapped
+            int[] mapping = new int[keyboardSize];
             Arrays.fill(mapping, -1);
 
-            // 3. Fill the mapping array based on the pairs
-            // Note: Reflector mapping is symmetric. If A maps to B, then B must map to A.
             for (int[] pair : reflectorDesc.getPairs()) {
                 int inputIndex = pair[0];
                 int outputIndex = pair[1];
 
-                // Map both directions
+                // Map both directions (Reflector is symmetric)
                 mapping[inputIndex] = outputIndex;
                 mapping[outputIndex] = inputIndex;
             }
 
-            // 4. Create the Reflector object and select the active one
-            // Logic: We pick the first reflector we find, but if we find "I", we override and use it.
-            if (this.reflector == null || reflectorDesc.getId().equals("I")) {
-                this.reflector = new ReflectorImpl(mapping);
-
-                // If we found "I", we can stop searching (priority given to I for this exercise)
-                if (reflectorDesc.getId().equals("I")) {
-                    break;
-                }
-            }
-        }
-
-// 5. Final validation to ensure a reflector was successfully created
-        if (this.reflector == null) {
-            throw new RuntimeException("Error: No reflector could be initialized from the descriptor.");
+            Reflector reflector = new ReflectorImpl(mapping);
+            this.allAvailableReflectors.put(reflectorDesc.getId(), reflector);
         }
     }
-
 
     // Temporary constructor that builds a simple hard-coded Enigma machine
     private void initSimpleMachine() {
@@ -119,10 +106,10 @@ public class MachineImpl implements Machine {
         Rotor rightRotor  = new RotorImpl(3, createShiftMapping(size, 3), size - 1, 0);
 
         // Left → Middle → Right (signal will go right-to-left forward, then left-to-right backward)
-        this.rotors = Arrays.asList(leftRotor, middleRotor, rightRotor);
+        this.activeRotors = Arrays.asList(leftRotor, middleRotor, rightRotor);
 
         // Simple reflector that just pairs indices
-        this.reflector = ReflectorImpl.createBasicReflector(size);
+        this.activeReflector = ReflectorImpl.createBasicReflector(size);
 
         // For now, we only initialize the message counter.
         this.processedMessages = 0;
@@ -147,7 +134,7 @@ public class MachineImpl implements Machine {
     @Override
     public List<Character> getCurrentRotorPositions() {
         List<Character> positions = new ArrayList<>();
-        for (Rotor rotor : this.rotors) {
+        for (Rotor rotor : this.activeRotors) {
             int currentIndex = rotor.getPosition();
 
             char currentLetter = this.keyboard.getABC().charAt(currentIndex);
@@ -267,6 +254,18 @@ public class MachineImpl implements Machine {
     private char processSingleCharacter(char inputChar) {
         logDebug("\n[CHAR] Processing character: '%c'", inputChar);
 
+            // Forward through rotors: right to left
+            for (int i = activeRotors.size() - 1; i >= 0; i--) {
+                index = activeRotors.get(i).mapForward(index);
+            }
+
+            // Reflector
+            index = activeReflector.getPairedIndex(index);
+
+            // Backward through rotors: left to right
+            for (int i = 0; i < activeRotors.size(); i++) {
+                index = activeRotors.get(i).mapBackward(index);
+            }
         // --- Step 1: Rotate Rotors ---
         // Log state BEFORE rotation
         logDebug("  [STEP] Rotors BEFORE step: %s", getCurrentRotorPositions());
@@ -325,8 +324,8 @@ public class MachineImpl implements Machine {
         boolean carry = true;
 
         // Start from the right most rotor (last in the list)
-        for (int i = rotors.size() - 1; i >= 0 && carry; i--) {
-            carry = rotors.get(i).step();
+        for (int i = activeRotors.size() - 1; i >= 0 && carry; i--) {
+            carry = activeRotors.get(i).step();
         }
     }
 
@@ -334,7 +333,7 @@ public class MachineImpl implements Machine {
     @Override
     public MachineSpecs getSpecs() {
         return new MachineSpecs(
-                rotors.size(),
+                activeRotors.size(),
                 1,                 // Right now only 1 reflector
                 processedMessages,
                 null,              // original code (TODO)
@@ -363,5 +362,43 @@ public class MachineImpl implements Machine {
         }
     }
 
+     // Sets the active components and their initial positions based on a code configuration
+    @Override
+    public void setConfiguration(List<Integer> rotorIDs, List<Character> startingPositions, String reflectorID) {
+
+        // Set Active Reflector
+        this.activeReflector = allAvailableReflectors.get(reflectorID);
+
+        if (this.activeReflector == null) {
+            // This should be caught by the engine validation layer, but good for safety
+            throw new IllegalArgumentException("Reflector ID " + reflectorID + " is not available.");
+        }
+
+        // Set Active Rotors
+        List<Rotor> selectedRotors = new ArrayList<>();
+
+        for (int id : rotorIDs) {
+            Rotor rotor = allAvailableRotors.get(id);
+            if (rotor == null) {
+                // This should also be caught by the engine validation layer
+                throw new IllegalArgumentException("Rotor ID " + id + " is not available.");
+            }
+
+            selectedRotors.add(rotor);
+        }
+
+        this.activeRotors = selectedRotors;
+
+        // Set Initial Positions
+        for (int i = 0; i < activeRotors.size(); i++) {
+            Rotor rotor = activeRotors.get(i);
+            char startingChar = startingPositions.get(i);
+
+            // Convert the character to its 0-based index
+            int startingIndex = keyboard.toIndex(startingChar);
+
+            ((RotorImpl) rotor).setPosition(startingIndex);
+        }
+    }
 }
 
