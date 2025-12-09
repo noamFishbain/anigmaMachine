@@ -13,9 +13,9 @@ import java.util.List;
  */
 public class RotorDescriptor {
 
-    private final int id;
-    private final List<Integer> mapping;   // placeholder, can be refined later
-    private final int notchPosition;
+    private int id;
+    private List<Integer> mapping;   // placeholder, can be refined later
+    private int notchPosition;
 
     public RotorDescriptor(int id,
                            List<Integer> mapping,
@@ -23,6 +23,10 @@ public class RotorDescriptor {
         this.id = id;
         this.mapping = mapping;
         this.notchPosition = notchPosition;
+    }
+
+    public RotorDescriptor() {
+
     }
 
     public int getId() {
@@ -36,4 +40,16 @@ public class RotorDescriptor {
     public int getNotchPosition() {
         return notchPosition;
     }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+    public void setMapping(List<Integer> mapping) {
+        this.mapping = mapping;
+    }
+    public void setNotchPosition(int notchPosition) {
+        this.notchPosition = notchPosition;
+    }
+
+
 }

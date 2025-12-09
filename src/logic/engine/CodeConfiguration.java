@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class CodeConfiguration {
 
     private final List<Integer> rotorIdsInOrder; // Rotor ID's in the physical order inside the machine. LEFT to RIGHT order
-    private final List<Character> rotorPositions; // Starting positions of each rotor, same order as rotorIdsInOrder
+    private List<Character> rotorPositions; // Starting positions of each rotor, same order as rotorIdsInOrder
     private final String reflectorId; // Reflector identifier, e.g. "I", "II", "III"
 
     // Creates a new CodeConfiguration.
@@ -84,5 +84,9 @@ public class CodeConfiguration {
     public String toString() {
         // For debugging, we simply reuse the compact representation
         return toCompactString();
+    }
+
+    public void setRotorPositions(List<Character> newPositions) {
+        this.rotorPositions = newPositions;
     }
 }

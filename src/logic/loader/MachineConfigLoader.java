@@ -1,6 +1,7 @@
 package logic.loader;
 
 import logic.loader.dto.MachineDescriptor;
+import logic.machine.Machine;
 
 public interface MachineConfigLoader {
 
@@ -12,5 +13,5 @@ public interface MachineConfigLoader {
      * @return MachineDescriptor representing the machine configuration
      * @throws Exception if the file is missing, invalid, or fails validation
      */
-    MachineDescriptor load(String filePath) throws Exception;
+    Machine load(String filePath) throws Exception;
 }

@@ -28,4 +28,9 @@ public interface EnigmaEngine {
 
     // Resets machine to the original code configuration chosen last time
     void reset();
+    /**
+     * Toggles the verbose debug mode on the internal machine.
+     */
+    void setDebugMode(boolean debugMode);
+
 }

@@ -15,4 +15,5 @@ public class ConsoleMenu {
         System.out.println("5. Exit");
         System.out.print("Choose an option (1-5): ");
     }
+
 }

@@ -13,12 +13,16 @@ import java.util.List;
  */
 public class ReflectorDescriptor {
 
-    private final String id;
-    private final List<int[]> pairs;   // each pair represents a mapping (a <-> b)
+    private String id;
+    private List<int[]> pairs;   // each pair represents a mapping (a <-> b)
 
     public ReflectorDescriptor(String id, List<int[]> pairs) {
         this.id = id;
         this.pairs = pairs;
+    }
+
+    public ReflectorDescriptor() {
+
     }
 
     public String getId() {
@@ -28,4 +32,13 @@ public class ReflectorDescriptor {
     public List<int[]> getPairs() {
         return pairs;
     }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+    public void setPairs(List<int[]> pairs) {
+        this.pairs = pairs;
+    }
+
+
 }

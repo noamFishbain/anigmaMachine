@@ -82,6 +82,7 @@ public class ConsoleApp {
 
         try {
             engine.loadMachineFromXml(path);
+            engine.setDebugMode(true);
             System.out.println("Machine configuration loaded successfully.");
         } catch (Exception e) {
             System.out.println("Failed to load machine from XML:");

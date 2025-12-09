@@ -19,4 +19,6 @@ public interface Keyboard {
 
     // Returns the entire keyboard as a continuous string
     String asString();
+
+    CharSequence getABC();
 }
