@@ -136,4 +136,9 @@ public class RotorImpl implements Rotor {
         }
         this.position = newPosition;
     }
+
+    @Override
+    public int getNotch(){
+        return notchPosition;
+    }
 }

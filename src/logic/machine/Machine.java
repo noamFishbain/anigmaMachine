@@ -26,7 +26,7 @@ public interface Machine {
 
     List<Character> getCurrentRotorPositions();
     // Return machine specs for the UI/engine
-    MachineSpecs getSpecs();
+    MachineSpecs getMachineSpecs();
 
     // Configure the active machine components (Rotors and Reflector)
     void setConfiguration(List<Integer> rotorIDs, List<Character> startingPositions, String reflectorID);
@@ -36,6 +36,11 @@ public interface Machine {
     // Getters to check if the machine is configured
     List<Rotor> getActiveRotors();
     Reflector getActiveReflector();
+    String formatConfiguration(List<Integer> rotorIDs, List<Character> positions, String reflectorID);
+    int getAllRotorsCount();
+    public int getAllReflectorsCount();
+
+
 
     // Getters for ALL available components
     Map<Integer, Rotor> getAllAvailableRotors();

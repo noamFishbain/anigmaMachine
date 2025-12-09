@@ -26,4 +26,6 @@ public interface Rotor {
 
     // Sets the rotor's current rotational offset (position) manually
     void setPosition(int newPosition);
+
+    int getNotch();
 }

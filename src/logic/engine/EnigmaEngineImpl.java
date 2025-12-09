@@ -160,36 +160,39 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     @Override
     public MachineSpecs getMachineSpecs() {
         if (machine == null) {
-            throw new IllegalStateException("Machine is not loaded.");
+            // Return empty specs if no machine is loaded
+            return new MachineSpecs(0, 0, 0, "", "");
         }
 
-        // If we have descriptor from XML – use real values.
-        // Otherwise, fall back to the simple machine assumptions (3 rotors, 1 reflector).
-        int totalRotors = (machine.getAllAvailableRotors() != null)
-                ? machine.getAllAvailableRotors().size()
-                : 3; // Fallback for hardcoded machine
+        // 1. Format the string for the Original Code configuration
+        String originalCodeFormatted = "";
+        if (originalCode != null) {
+            // We delegate the formatting logic to the machine, passing the stored config data
+            originalCodeFormatted = machine.formatConfiguration(
+                    originalCode.getRotorIdsInOrder(),
+                    originalCode.getRotorPositions(),
+                    originalCode.getReflectorId()
+            );
+        }
 
-        int totalReflectors = (machine.getAllAvailableReflectors() != null)
-                ? machine.getAllAvailableReflectors().size()
-                : 1; // Fallback for hardcoded machine
+        // 2. Format the string for the Current Code configuration
+        String currentCodeFormatted = "";
+        if (currentCode != null) {
+            // currentCode is updated in process(), so it reflects the live state
+            currentCodeFormatted = machine.formatConfiguration(
+                    currentCode.getRotorIdsInOrder(),
+                    currentCode.getRotorPositions(),
+                    currentCode.getReflectorId()
+            );
+        }
 
-        int processedMessages = machine.getProcessedMessages();
-
-        // Convert code configurations into compact string format
-        String originalCodeCompact = (originalCode != null)
-                ? originalCode.toCompactString()
-                : null;
-
-        String currentCodeCompact = (currentCode != null)
-                ? currentCode.toCompactString()
-                : null;
-
+        // 3. Create and return the DTO
         return new MachineSpecs(
-                totalRotors,
-                totalReflectors,
-                processedMessages,
-                originalCodeCompact,
-                currentCodeCompact
+                machine.getAllRotorsCount(),      // Ensure you have a getter for this in Machine
+                machine.getAllReflectorsCount(),  // Ensure you have a getter for this in Machine
+                machine.getProcessedMessages(),
+                originalCodeFormatted,
+                currentCodeFormatted
         );
     }
 
