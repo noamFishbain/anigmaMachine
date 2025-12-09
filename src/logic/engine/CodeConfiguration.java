@@ -89,4 +89,6 @@ public class CodeConfiguration {
     public void setRotorPositions(List<Character> newPositions) {
         this.rotorPositions = newPositions;
     }
+
+
 }

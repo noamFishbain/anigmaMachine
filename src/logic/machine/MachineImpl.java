@@ -315,7 +315,9 @@ public class MachineImpl implements Machine {
 
     // Returns the machine specifications for display
     @Override
-    public MachineSpecs getSpecs() {
+    public MachineSpecs getMachineSpecs() {
+
+
         return new MachineSpecs(
                 activeRotors.size(),
                 1,                 // Right now only 1 reflector
@@ -394,5 +396,89 @@ public class MachineImpl implements Machine {
     public Reflector getActiveReflector() {
         return activeReflector;
     }
+    /**
+     * Generates the formatted string: <ID,ID><Pos(Dist),Pos(Dist)><ReflectorID>
+     * Used for both Original and Current code specifications.
+     */
+    public String formatConfiguration(List<Integer> rotorIDs, List<Character> positions, String reflectorID) {
+        if (rotorIDs.size() != positions.size()) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        // -----------------------------------------------------------
+        // 1. Rotor IDs Part: <ID,ID,ID> (Printed Left to Right)
+        // -----------------------------------------------------------
+        sb.append("<");
+        // We iterate from the end (Leftmost) to the beginning (Rightmost)
+        // because we store rotors [Right, Middle, Left] but print [Left, Middle, Right]
+        for (int i = rotorIDs.size() - 1; i >= 0; i--) {
+            sb.append(rotorIDs.get(i));
+            if (i > 0) {
+                sb.append(",");
+            }
+        }
+        sb.append(">");
+
+        // -----------------------------------------------------------
+        // 2. Positions & Notch Distance: <Char(dist),Char(dist)>
+        // -----------------------------------------------------------
+        sb.append("<");
+        for (int i = rotorIDs.size() - 1; i >= 0; i--) {
+            int id = rotorIDs.get(i);
+            char currentPosChar = positions.get(i);
+
+            // Fetch the notch position from the Inventory
+            // (Assumes allRotorsInventory exists and holds all loaded rotors)
+            int notchPos = allAvailableRotors.get(id).getNotch();
+
+            int currentPosIdx = keyboard.toIndex(currentPosChar);
+            int alphabetLen = keyboard.size();
+
+            // Calculate distance to notch: (Notch - Current + Len) % Len
+            int distToNotch = (notchPos - currentPosIdx + alphabetLen) % alphabetLen;
+
+            sb.append(currentPosChar).append("(").append(distToNotch).append(")");
+
+            if (i > 0) {
+                sb.append(",");
+            }
+        }
+        sb.append(">");
+
+        // -----------------------------------------------------------
+        // 3. Reflector ID Part: <RomanID>
+        // -----------------------------------------------------------
+        sb.append("<");
+        sb.append(convertIntToRoman(reflectorID));
+        sb.append(">");
+
+        return sb.toString();
+    }
+
+    // Helper to convert Int ID back to Roman (for display)
+    private String convertIntToRoman(String id) {
+        int idRoman = Integer.parseInt(id);
+        switch (idRoman) {
+            case 1: return "I";
+            case 2: return "II";
+            case 3: return "III";
+            case 4: return "IV";
+            case 5: return "V";
+            default: return String.valueOf(id);
+        }
+    }
+
+    @Override
+    public int getAllRotorsCount() {
+        return allAvailableRotors.size();
+    }
+
+    @Override
+    public int getAllReflectorsCount() {
+        return allAvailableReflectors.size();
+    }
+
 }
 
