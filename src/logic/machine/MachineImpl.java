@@ -18,8 +18,6 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
-import static jdk.jfr.internal.management.ManagementSupport.logDebug;
-
 /**
  * Represents the complete Enigma machine.
  * Coordinates the flow of characters through the rotors, reflector,
@@ -243,6 +241,7 @@ public class MachineImpl implements Machine {
         logDebug("--- [END] Process Completed. Result: %s ---\n", result.toString());
         return result.toString();
     }
+
     /**
      * Handles the complete flow of a single character through the machine:
      * 1. Steps the rotors.
@@ -254,19 +253,6 @@ public class MachineImpl implements Machine {
     private char processSingleCharacter(char inputChar) {
         logDebug("\n[CHAR] Processing character: '%c'", inputChar);
 
-            // Forward through rotors: right to left
-            for (int i = activeRotors.size() - 1; i >= 0; i--) {
-                index = activeRotors.get(i).mapForward(index);
-            }
-
-            // Reflector
-            index = activeReflector.getPairedIndex(index);
-
-            // Backward through rotors: left to right
-            for (int i = 0; i < activeRotors.size(); i++) {
-                index = activeRotors.get(i).mapBackward(index);
-            }
-        // --- Step 1: Rotate Rotors ---
         // Log state BEFORE rotation
         logDebug("  [STEP] Rotors BEFORE step: %s", getCurrentRotorPositions());
 
@@ -276,15 +262,15 @@ public class MachineImpl implements Machine {
         logDebug("  [STEP] Rotors AFTER step:  %s", getCurrentRotorPositions());
 
 
-        // --- Step 2: Input Conversion ---
+        // Input Conversion
         int currentIndex = keyboard.toIndex(inputChar);
         logDebug("  [IN]   Input index: %d ('%c')", currentIndex, inputChar);
 
 
-        // --- Step 3: Forward Path (Right to Left) ---
+        // Forward Path (Right to Left)
         // Iterating backwards because index 0 is the Rightmost rotor in our list
-        for (int i = rotors.size() - 1; i >= 0; i--) {
-            Rotor rotor = rotors.get(i);
+        for (int i = activeRotors.size() - 1; i >= 0; i--) {
+            Rotor rotor = activeRotors.get(i);
             int indexBefore = currentIndex;
 
             currentIndex = rotor.mapForward(currentIndex);
@@ -292,16 +278,15 @@ public class MachineImpl implements Machine {
             logDebug("  [FWD]  Rotor ID %d: %d -> %d", rotor.getId(), indexBefore, currentIndex);
         }
 
-
-        // --- Step 4: Reflector ---
         int indexBeforeReflect = currentIndex;
-        currentIndex = reflector.getPairedIndex(currentIndex); // Or .map(currentIndex)
-        logDebug("  [REF]  Reflector ID %d: %d -> %d", reflector.getId(), indexBeforeReflect, currentIndex);
+        currentIndex = activeReflector.getPairedIndex(currentIndex);
 
+        // Assuming ReflectorImpl has a method getId()
+        String reflectorId = (activeReflector instanceof ReflectorImpl) ? String.valueOf(((ReflectorImpl) activeReflector).getId()) : "N/A";
+        logDebug("  [REF]  Reflector ID %s: %d -> %d", reflectorId, indexBeforeReflect, currentIndex);
 
-        // --- Step 5: Backward Path (Left to Right) ---
-        for (int i = 0; i < rotors.size(); i++) {
-            Rotor rotor = rotors.get(i);
+        // Backward Path (Left to Right)
+        for (Rotor rotor : activeRotors) {
             int indexBefore = currentIndex;
 
             currentIndex = rotor.mapBackward(currentIndex);
@@ -309,8 +294,7 @@ public class MachineImpl implements Machine {
             logDebug("  [BWD]  Rotor ID %d: %d -> %d", rotor.getId(), indexBefore, currentIndex);
         }
 
-
-        // --- Step 6: Final Result ---
+        // Final Result
         char outputChar = keyboard.toChar(currentIndex);
         logDebug("  [OUT]  Final output: %d ('%c')", currentIndex, outputChar);
 
@@ -399,6 +383,16 @@ public class MachineImpl implements Machine {
 
             ((RotorImpl) rotor).setPosition(startingIndex);
         }
+    }
+
+    @Override
+    public List<Rotor> getActiveRotors() {
+        return activeRotors;
+    }
+
+    @Override
+    public Reflector getActiveReflector() {
+        return activeReflector;
     }
 }
 

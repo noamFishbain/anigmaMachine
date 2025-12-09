@@ -1,6 +1,8 @@
 package logic.machine;
 
 import logic.engine.MachineSpecs;
+import logic.machine.components.Reflector;
+import logic.machine.components.Rotor;
 
 import java.util.List;
 // import logic.loader.dto.MachineDescriptor; // אם את משתמשת בזה
@@ -27,5 +29,10 @@ public interface Machine {
 
     // Configure the active machine components (Rotors and Reflector)
     void setConfiguration(List<Integer> rotorIDs, List<Character> startingPositions, String reflectorID);
+
     void setDebugMode(boolean debugMode);
+
+    // Getters to check if the machine is configured
+    List<Rotor> getActiveRotors();
+    Reflector getActiveReflector();
 }
