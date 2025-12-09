@@ -50,17 +50,26 @@ public class ConsoleApp {
                         handleShowMachineSpecs();
                         break;
                     case 3:
-                        handleProcessText();
+                        handleManualCode();
                         break;
                     case 4:
-                        handleReset();
+                        handleAutomaticCode();
                         break;
                     case 5:
+                        handleProcessText();
+                    case 6:
+                        handleReset();
+                        break;
+                    case 7:
+                        // handleHistory(); // todo
+                        System.out.println("History not implemented yet.");
+                        break;
+                    case 8:
                         exit = true;
                         System.out.println("Exiting application. Goodbye!");
                         break;
                     default:
-                        System.out.println("Invalid option. Please choose 1-5.");
+                        System.out.println("Invalid option. Please choose 1-8.");
                 }
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
@@ -118,6 +127,44 @@ public class ConsoleApp {
         }
     }
 
+    // Command 3: Manual Code
+    private void handleManualCode() {
+        try {
+            // Get Rotors
+            System.out.println("Enter Rotor IDs (Left to Right): ");
+            // We assume user enters Left to Right. The Engine reverses it.
+            String rotorIDs = ConsoleInputReader.readLine(scanner);
+
+            // Get Positions
+            System.out.println("Enter Initial Positions: ");
+            String positions = ConsoleInputReader.readLine(scanner);
+
+            // Get Reflector
+            System.out.println("Enter Reflector ID (1=I, 2=II, 3=III, 4=IV, 5=V): ");
+            int reflectorNum = ConsoleInputReader.readInt(scanner);
+
+            // Send to Engine
+            String result = engine.setManualCode(rotorIDs, positions, reflectorNum);
+            System.out.println("Code set successfully: " + result);
+
+        } catch (Exception e) {
+            System.out.println("Failed to set manual code: " + e.getMessage());
+            System.out.println("Please try again.");
+        }
+    }
+
+    // Command 4: Automatic Code
+    private void handleAutomaticCode() {
+        try {
+            engine.setAutomaticCode();
+            MachineSpecs specs = engine.getMachineSpecs();
+            System.out.println("Automatic code generated successfully.");
+            System.out.println("Selected Code: " + specs.getOriginalCodeCompact());
+        } catch (Exception e) {
+            System.out.println("Failed to set automatic code: " + e.getMessage());
+        }
+    }
+
     /**
      * Handles option 3: processing input text through the Enigma machine.
      * At this stage, the engine may simply echo the text back until
@@ -132,7 +179,7 @@ public class ConsoleApp {
             System.out.println("Input : " + input);
             System.out.println("Output: " + output);
         } catch (IllegalStateException e) {
-            System.out.println("Machine is not loaded yet. Please load an XML file first.");
+            System.out.println("Error: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("Failed to process text: " + e.getMessage());
         }
@@ -146,7 +193,7 @@ public class ConsoleApp {
     private void handleReset() {
         try {
             engine.reset();
-            System.out.println("Machine reset requested (implementation pending in engine).");
+            System.out.println("Machine reset to original code.");
         } catch (Exception e) {
             System.out.println("Failed to reset machine: " + e.getMessage());
         }
