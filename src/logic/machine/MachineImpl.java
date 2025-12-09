@@ -155,17 +155,17 @@ public class MachineImpl implements Machine {
 
     // Implement code initialization logic
     // For now the "initial code" is just the default positions (all zeros)
-    @Override
-    public void setInitialCode() {
-        resetToInitialCode();
-    }
+//    @Override
+//    public void setInitialCode() {
+//        resetToInitialCode();
+//    }
 
     // Reset machine to initial configuration
-    @Override
-    public void resetToInitialCode() {
-        // For the simple version: just rebuild the hard-coded machine
-        initSimpleMachine();
-    }
+//    @Override
+//    public void resetToInitialCode() {
+//        // For the simple version: just rebuild the hard-coded machine
+//        initSimpleMachine();
+//    }
 
     // Processes the given text through the machine
 //    @Override
@@ -451,24 +451,25 @@ public class MachineImpl implements Machine {
         // 3. Reflector ID Part: <RomanID>
         // -----------------------------------------------------------
         sb.append("<");
-        sb.append(convertIntToRoman(reflectorID));
+        //sb.append(convertIntToRoman(reflectorID));
+        sb.append(reflectorID);
         sb.append(">");
 
         return sb.toString();
     }
 
     // Helper to convert Int ID back to Roman (for display)
-    private String convertIntToRoman(String id) {
-        int idRoman = Integer.parseInt(id);
-        switch (idRoman) {
-            case 1: return "I";
-            case 2: return "II";
-            case 3: return "III";
-            case 4: return "IV";
-            case 5: return "V";
-            default: return id;
-        }
-    }
+//    private String convertIntToRoman(String id) {
+//        int idRoman = Integer.parseInt(id);
+//        switch (idRoman) {
+//            case 1: return "I";
+//            case 2: return "II";
+//            case 3: return "III";
+//            case 4: return "IV";
+//            case 5: return "V";
+//            default: return id;
+//        }
+//    }
 
     @Override
     public int getAllRotorsCount() {

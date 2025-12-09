@@ -26,22 +26,16 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     private CodeConfiguration currentCode; // The code after rotor stepping during processing
 
     public EnigmaEngineImpl() {
-        // Default: build a simple hard-coded machine
-        this.machine = new MachineImpl();
-        this.descriptor = null; // no XML yet
+        this.machine = null;
+        this.descriptor = null;
     }
 
     @Override
     public void loadMachineFromXml(String path) throws Exception {
         MachineConfigLoader loader = new XmlMachineConfigLoader();
-        //this.descriptor = (MachineDescriptor) loader.load(path);
-
-        // Build internal machine model from descriptor
-        //this.machine = new MachineImpl(descriptor);
-
         this.machine = loader.load(path);
 
-        // Whenever we load a new machine configuration, we reset code information
+        // Reset code information on new load
         this.originalCode = null;
         this.currentCode = null;
     }
@@ -264,16 +258,19 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         if (machine == null) {
             throw new IllegalStateException("Machine is not loaded.");
         }
-
-        // Reset machine's internal state
-        machine.resetToInitialCode();
-
-        // Reset code configuration: go back from currentCode to originalCode
-        if (originalCode != null) {
-            currentCode = originalCode;
-        } else {
-            currentCode = null;
+        if (originalCode == null) {
+            throw new IllegalStateException("No configuration to reset to. Please set code first (P3 or P4).");
         }
+
+        // Reset the Machine (Re-apply the original configuration)
+        machine.setConfiguration(
+                originalCode.getRotorIdsInOrder(),
+                originalCode.getRotorPositions(),
+                originalCode.getReflectorId()
+        );
+
+        // Reset Engine State
+        this.currentCode = originalCode;
     }
 
     @Override
