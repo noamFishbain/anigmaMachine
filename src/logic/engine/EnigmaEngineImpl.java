@@ -144,16 +144,46 @@ public class EnigmaEngineImpl implements EnigmaEngine {
 
     @Override
     public void setAutomaticCode() {
-        // TODO (next phases):
-        //  - Randomly choose rotor IDs (no duplicates)
-        //  - Randomly choose their order
-        //  - Randomly choose starting positions (letters from the alphabet)
-        //  - Randomly choose a reflector
-        //  - Build CodeConfiguration and update originalCode + currentCode
-        //
-        // For now we just behave like "no code set yet".
-        this.originalCode = null;
-        this.currentCode = null;
+        // Check if machine is loaded
+        if (machine == null) {
+            throw new IllegalStateException("Machine is not loaded. Please load an XML file first.");
+        }
+
+        Random random = new Random();
+
+        // Randomly select 3 unique rotors from available rotors
+        List<Integer> availableRotorIDs = new ArrayList<>(machine.getAllAvailableRotors().keySet());
+        List<Integer> selectedRotorIDs = new ArrayList<>();
+
+        // Randomly select rotors until we have 3 unique IDs
+        while (selectedRotorIDs.size() < 3) {
+            int randomIndex = random.nextInt(availableRotorIDs.size());
+            Integer id = availableRotorIDs.get(randomIndex);
+
+            if (!selectedRotorIDs.contains(id)) {
+                selectedRotorIDs.add(id);
+            }
+        }
+
+        // Randomly select starting positions
+        String alphabet = machine.getKeyboard().asString();
+        List<Character> positions = new ArrayList<>();
+
+        for (int i = 0; i < selectedRotorIDs.size(); i++) {
+            positions.add(alphabet.charAt(random.nextInt(alphabet.length())));
+        }
+
+        // Randomly select a reflector
+        List<String> availableReflectors = new ArrayList<>(machine.getAllAvailableReflectors().keySet());
+        String selectedReflectorID = availableReflectors.get(random.nextInt(availableReflectors.size()));
+
+        // Configure Machine (Physically set the rotors and reflector)
+        machine.setConfiguration(selectedRotorIDs, positions, selectedReflectorID);
+
+        // Save State (Update the engine's current code)
+        CodeConfiguration newCode = new CodeConfiguration(selectedRotorIDs, positions, selectedReflectorID);
+        this.originalCode = newCode;
+        this.currentCode = newCode;
     }
 
     // Returns a summary of the machine's runtime state and configuration details
