@@ -14,10 +14,10 @@ public interface Machine {
     void configure(/* MachineDescriptor descriptor */);
 
     // Set the initial code (rotor positions, selected reflector, etc.)
-    void setInitialCode(/* params for initial code */);
+    // void setInitialCode(/* params for initial code */);
 
     // Reset machine state back to the initial code
-    void resetToInitialCode();
+    // void resetToInitialCode();
 
     // Process a full string (encrypt/decrypt)
     String process(String input);
