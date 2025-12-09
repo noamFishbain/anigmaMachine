@@ -11,4 +11,7 @@ public interface Reflector {
 
     // Returns the paired index for the given index
     int getPairedIndex(int index);
+
+    // Optional getters that might be useful to the machine
+    int getId();
 }

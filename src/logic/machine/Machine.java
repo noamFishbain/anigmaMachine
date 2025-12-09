@@ -24,4 +24,5 @@ public interface Machine {
     List<Character> getCurrentRotorPositions();
     // Return machine specs for the UI/engine
     MachineSpecs getSpecs();
+    void setDebugMode(boolean debugMode);
 }

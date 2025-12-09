@@ -63,7 +63,7 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
 
         for (BTERotor bteRotor : bteEnigma.getBTERotors().getBTERotor()) {
             int id = bteRotor.getId();
-            int notch = bteRotor.getNotch();
+            int notch = bteRotor.getNotch()-1;
 
             // Calculate mapping array
             List<Integer> forwardMapping = new ArrayList<>(Collections.nCopies(abcLength, 0));
