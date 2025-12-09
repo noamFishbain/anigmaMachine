@@ -9,11 +9,18 @@ public class ReflectorImpl implements Reflector {
 
     // Reflection mapping: for each index i, reflectionMapping[i] = paired index
     private final int[] reflectionMapping;
-
+    private int id;
+    public ReflectorImpl(int[] reflectionMapping, int id) {
+        validateMapping(reflectionMapping);     // ensure mapping is legal
+        this.reflectionMapping = reflectionMapping.clone();
+        this.id = id;
+    }
     public ReflectorImpl(int[] reflectionMapping) {
         validateMapping(reflectionMapping);     // ensure mapping is legal
-        this.reflectionMapping = reflectionMapping.clone(); // keep internal copy
+        this.reflectionMapping = reflectionMapping.clone();
     }
+
+
 
      // Return total number of symbols handled by the reflector
      @Override
@@ -30,6 +37,11 @@ public class ReflectorImpl implements Reflector {
             );
         }
         return reflectionMapping[index];
+    }
+
+    @Override
+    public int getId() {
+        return id;
     }
 
     // Factory method to create a basic reflector where:

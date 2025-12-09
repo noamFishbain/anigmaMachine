@@ -27,4 +27,5 @@ public interface Machine {
 
     // Configure the active machine components (Rotors and Reflector)
     void setConfiguration(List<Integer> rotorIDs, List<Character> startingPositions, String reflectorID);
+    void setDebugMode(boolean debugMode);
 }

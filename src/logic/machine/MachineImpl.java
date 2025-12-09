@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
+import static jdk.jfr.internal.management.ManagementSupport.logDebug;
+
 /**
  * Represents the complete Enigma machine.
  * Coordinates the flow of characters through the rotors, reflector,
@@ -168,31 +170,89 @@ public class MachineImpl implements Machine {
     }
 
     // Processes the given text through the machine
+//    @Override
+//    public String process(String input) {
+//        incrementProcessedMessages();
+//
+//        if (input == null || input.isEmpty()) {
+//            return input;
+//        }
+//
+//        // We will work in upper-case only for the simple keyboard
+//        String normalized = input.toUpperCase();
+//        StringBuilder result = new StringBuilder();
+//
+//        for (char c : input.toCharArray()) {
+//
+//            // Skip encryption for characters not in the keyboard
+//            if (!keyboard.contains(c)) {
+//                result.append(c);
+//                continue;
+//            }
+//
+//            // Step rotors before processing each character
+//            stepRotorsChain();
+//
+//            // Char to index
+//            int index = keyboard.toIndex(c);
+//
+//            // Forward through rotors: right to left
+//            for (int i = rotors.size() - 1; i >= 0; i--) {
+//                index = rotors.get(i).mapForward(index);
+//            }
+//
+//            // Reflector
+//            index = reflector.getPairedIndex(index);
+//
+//            // Backward through rotors: left to right
+//            for (int i = 0; i < rotors.size(); i++) {
+//                index = rotors.get(i).mapBackward(index);
+//            }
+//
+//            // Index to char
+//            char encoded = keyboard.toChar(index);
+//            result.append(encoded);
+//        }
+//
+//        return result.toString();
+//    }
+
     @Override
     public String process(String input) {
         incrementProcessedMessages();
 
-        if (input == null || input.isEmpty()) {
-            return input;
-        }
+        if (input == null || input.isEmpty()) return "";
 
-        // We will work in upper-case only for the simple keyboard
         String normalized = input.toUpperCase();
         StringBuilder result = new StringBuilder();
 
-        for (char c : input.toCharArray()) {
+        logDebug("--- [START] Processing String: %s ---", normalized);
 
-            // Skip encryption for characters not in the keyboard
+        for (char c : normalized.toCharArray()) {
+            // If char is not in ABC, append as is and skip
             if (!keyboard.contains(c)) {
                 result.append(c);
                 continue;
             }
 
-            // Step rotors before processing each character
-            stepRotorsChain();
+            // Delegate the heavy lifting to a helper method
+            char processedChar = processSingleCharacter(c);
+            result.append(processedChar);
+        }
 
-            // Char to index
-            int index = keyboard.toIndex(c);
+        logDebug("--- [END] Process Completed. Result: %s ---\n", result.toString());
+        return result.toString();
+    }
+    /**
+     * Handles the complete flow of a single character through the machine:
+     * 1. Steps the rotors.
+     * 2. Feeds the character through the forward path.
+     * 3. Reflects.
+     * 4. Feeds through the backward path.
+     * 5. Logs everything if debug mode is on.
+     */
+    private char processSingleCharacter(char inputChar) {
+        logDebug("\n[CHAR] Processing character: '%c'", inputChar);
 
             // Forward through rotors: right to left
             for (int i = activeRotors.size() - 1; i >= 0; i--) {
@@ -206,14 +266,57 @@ public class MachineImpl implements Machine {
             for (int i = 0; i < activeRotors.size(); i++) {
                 index = activeRotors.get(i).mapBackward(index);
             }
+        // --- Step 1: Rotate Rotors ---
+        // Log state BEFORE rotation
+        logDebug("  [STEP] Rotors BEFORE step: %s", getCurrentRotorPositions());
 
-            // Index to char
-            char encoded = keyboard.toChar(index);
-            result.append(encoded);
+        stepRotorsChain(); // The actual mechanical movement
+
+        // Log state AFTER rotation
+        logDebug("  [STEP] Rotors AFTER step:  %s", getCurrentRotorPositions());
+
+
+        // --- Step 2: Input Conversion ---
+        int currentIndex = keyboard.toIndex(inputChar);
+        logDebug("  [IN]   Input index: %d ('%c')", currentIndex, inputChar);
+
+
+        // --- Step 3: Forward Path (Right to Left) ---
+        // Iterating backwards because index 0 is the Rightmost rotor in our list
+        for (int i = rotors.size() - 1; i >= 0; i--) {
+            Rotor rotor = rotors.get(i);
+            int indexBefore = currentIndex;
+
+            currentIndex = rotor.mapForward(currentIndex);
+
+            logDebug("  [FWD]  Rotor ID %d: %d -> %d", rotor.getId(), indexBefore, currentIndex);
         }
 
-        return result.toString();
+
+        // --- Step 4: Reflector ---
+        int indexBeforeReflect = currentIndex;
+        currentIndex = reflector.getPairedIndex(currentIndex); // Or .map(currentIndex)
+        logDebug("  [REF]  Reflector ID %d: %d -> %d", reflector.getId(), indexBeforeReflect, currentIndex);
+
+
+        // --- Step 5: Backward Path (Left to Right) ---
+        for (int i = 0; i < rotors.size(); i++) {
+            Rotor rotor = rotors.get(i);
+            int indexBefore = currentIndex;
+
+            currentIndex = rotor.mapBackward(currentIndex);
+
+            logDebug("  [BWD]  Rotor ID %d: %d -> %d", rotor.getId(), indexBefore, currentIndex);
+        }
+
+
+        // --- Step 6: Final Result ---
+        char outputChar = keyboard.toChar(currentIndex);
+        logDebug("  [OUT]  Final output: %d ('%c')", currentIndex, outputChar);
+
+        return outputChar;
     }
+
 
     // Steps the rotor chain according to a simple Enigma stepping scheme
     // If a rotor hits its notch, step the rotor to its left
@@ -236,6 +339,27 @@ public class MachineImpl implements Machine {
                 null,              // original code (TODO)
                 null               // current code (TODO)
         );
+    }
+// ----------------- Debug Infrastructure -----------------
+
+    private boolean debugMode = true;
+
+    /**
+     * Call this from Main/UI to enable verbose logging
+     */
+    @Override
+    public void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
+    }
+
+    /**
+     * Internal helper to print logs only when debug is ON
+     */
+    private void logDebug(String format, Object... args) {
+        if (debugMode) {
+            // מדפיס בפורמט מסודר עם ירידת שורה
+            System.out.printf(format + "%n", args);
+        }
     }
 
      // Sets the active components and their initial positions based on a code configuration
@@ -277,3 +401,4 @@ public class MachineImpl implements Machine {
         }
     }
 }
+

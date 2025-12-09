@@ -152,4 +152,12 @@ public class EnigmaEngineImpl implements EnigmaEngine {
             currentCode = null;
         }
     }
+
+    @Override
+    public void setDebugMode(boolean debugMode) {
+        if (machine != null) {
+            machine.setDebugMode(debugMode);
+            System.out.println("Debug mode set to: " + debugMode);
+        }
+    }
 }
