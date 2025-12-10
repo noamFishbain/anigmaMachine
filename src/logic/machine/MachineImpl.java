@@ -126,6 +126,19 @@ public class MachineImpl implements Machine {
     public void resetToInitialCode() {
         // Implementation for reset logic should go here using saved configuration
     }
+    // Implement code initialization logic
+    // For now the "initial code" is just the default positions (all zeros)
+//    @Override
+//    public void setInitialCode() {
+//        resetToInitialCode();
+//    }
+
+    // Reset machine to initial configuration
+//    @Override
+//    public void resetToInitialCode() {
+//        // For the simple version: just rebuild the hard-coded machine
+//        initSimpleMachine();
+//    }
 
     @Override
     public String process(String input) {
@@ -298,3 +311,54 @@ public class MachineImpl implements Machine {
         return sb.toString();
     }
 }
+        // -----------------------------------------------------------
+        // 3. Reflector ID Part: <RomanID>
+        // -----------------------------------------------------------
+        sb.append("<");
+        //sb.append(convertIntToRoman(reflectorID));
+        sb.append(reflectorID);
+        sb.append(">");
+
+        return sb.toString();
+    }
+
+    // Helper to convert Int ID back to Roman (for display)
+//    private String convertIntToRoman(String id) {
+//        int idRoman = Integer.parseInt(id);
+//        switch (idRoman) {
+//            case 1: return "I";
+//            case 2: return "II";
+//            case 3: return "III";
+//            case 4: return "IV";
+//            case 5: return "V";
+//            default: return id;
+//        }
+//    }
+
+    @Override
+    public int getAllRotorsCount() {
+        return allAvailableRotors.size();
+    }
+
+    @Override
+    public int getAllReflectorsCount() {
+        return allAvailableReflectors.size();
+    }
+
+
+    @Override
+    public Map<Integer, Rotor> getAllAvailableRotors() {
+        return allAvailableRotors;
+    }
+
+    @Override
+    public Map<String, Reflector> getAllAvailableReflectors() {
+        return allAvailableReflectors;
+    }
+
+    @Override
+    public Keyboard getKeyboard() {
+        return keyboard;
+    }
+}
+
