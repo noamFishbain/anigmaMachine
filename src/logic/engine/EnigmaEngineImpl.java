@@ -42,12 +42,14 @@ public class EnigmaEngineImpl implements EnigmaEngine {
 
     // Sets a manual code configuration based on user input
     @Override
-    public String setManualCode(String rotorIDsString, String positionsString, int reflectorNum) throws Exception {        if (machine == null) {
+    public String setManualCode(String rotorIDsString, String positionsString, int reflectorNum) throws Exception {
+        if (machine == null) {
             throw new IllegalStateException("Machine is not loaded. Please load an XML file first.");
         }
 
         // Parsing and Basic Validation
         List<Integer> rotorIDs = parseRotorIDs(rotorIDsString);
+
         String reflectorID = convertIntToRoman(reflectorNum);
         String alphabet = machine.getKeyboard().asString();
 
@@ -68,7 +70,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         CodeConfiguration newCode = new CodeConfiguration(rotorIDs, positionsList, reflectorID);
         this.originalCode = newCode;
         this.currentCode = newCode;
-        return newCode.toCompactString();
+        return machine.formatConfiguration(rotorIDs, positionsList, reflectorID);
     }
 
     private void validateRotorCount(List<Integer> rotorIDs) {
@@ -122,8 +124,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
                 .map(Integer::parseInt)
                 .collect(Collectors.toList());
 
-        // The order must be reversed for the machine logic
-        Collections.reverse(ids);
+
         return ids;
     }
 

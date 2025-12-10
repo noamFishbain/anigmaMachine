@@ -84,8 +84,13 @@ public class RotorImpl implements Rotor {
     //  Advances the rotor by one position
     @Override
     public boolean step() {
+
+
         position = (position + 1) % keyboardSize;
-        return position == notchPosition;
+
+        boolean atNotchBeforeStep = (this.position == this.notchPosition);
+
+        return atNotchBeforeStep;
     }
 
     // Maps an input index through the rotor in the forward direction

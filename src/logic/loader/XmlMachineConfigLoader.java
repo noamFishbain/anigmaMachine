@@ -141,12 +141,22 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
 
             // Calculate mapping array
             List<Integer> forwardMapping = new ArrayList<>(Collections.nCopies(abcLength, 0));
-            for (BTEPositioning pos : bteRotor.getBTEPositioning()) {
-                char rightChar = pos.getRight().charAt(0);
+            List<BTEPositioning> positions = bteRotor.getBTEPositioning();
+
+            // אנו רצים עם אינדקס i שרץ מ-0 עד 25 (גודל ה-ABC)
+            for (int i = 0; i < positions.size(); i++) {
+                BTEPositioning pos = positions.get(i);
+
+                // אנחנו מסתכלים על האות בעמודה השמאלית
                 char leftChar = pos.getLeft().charAt(0);
-                int inputIndex = abc.indexOf(rightChar);
-                int outputIndex = abc.indexOf(leftChar);
-                forwardMapping.set(inputIndex, outputIndex);
+
+                // בודקים מה האינדקס של האות הזו ב-ABC (למשל A->0, B->1)
+                // זה קובע *איפה* נכתוב במערך התוצאה
+                int charIndexInAbc = abc.indexOf(leftChar);
+
+                // אנחנו שמים שם את ה-i (האינדקס של השורה הנוכחית)
+                // אם A הופיעה בשורה 4 (אינדקס 4), אז במיקום 0 במערך יהיה כתוב 4
+                forwardMapping.set(charIndexInAbc, i);
             }
 
             // Create RotorDescriptor
@@ -170,6 +180,245 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
             case "IV": return 4;
             case "V": return 5;
             default: throw new IllegalArgumentException("Unknown reflector ID: " + roman);
+        }
+    }
+
+    /// TEST FOR LOADING XML
+//    public static void main(String[] args) {
+//        try {
+//            String testFile = "/Users/noamfishbain/Documents/anigmaMachine/resources/ex1-sanity-small.xml"; // וודא שהנתיב נכון (אולי צריך path מלא)
+//            System.out.println("--- Starting XML Load Test for: " + testFile + " ---");
+//
+//            XmlMachineConfigLoader loader = new XmlMachineConfigLoader();
+//
+//            // 1. Unmarshal directly (simulate step 2 of load)
+//            File file = new File(testFile);
+//            BTEEnigma bteEnigma = loader.deserializeFromXML(new FileInputStream(file));
+//            System.out.println("Status: JAXB Unmarshalling successful.");
+//
+//            // 2. Convert to Descriptor (simulate step 4 of load)
+//            // שים לב: אנחנו משכפלים פה חלק מהלוגיקה של createMachineFromBTE כדי להציץ בנתונים
+//            // כי הפונקציה המקורית מחזירה MachineImpl ואנחנו רוצים לראות את ה-Descriptor
+//
+//            String abc = bteEnigma.getABC().trim();
+//            System.out.println("ABC Found: [" + abc + "]");
+//            System.out.println("ABC Length: " + abc.length());
+//
+//            List<RotorDescriptor> rotors = getRotorDescriptors(bteEnigma, abc);
+//            System.out.println("\n--- Rotors Loaded: " + rotors.size() + " ---");
+//
+//            for (RotorDescriptor r : rotors) {
+//                System.out.println("Rotor ID: " + r.getId());
+//                System.out.println("  Notch: " + r.getNotchPosition());
+//
+//                // בדיקת המיפוי של האות הראשונה (A)
+//                int indexA = abc.indexOf('A'); // אמור להיות 0
+//                if (indexA != -1) {
+//                    int mappedIndex = r.getMapping().get(indexA);
+//                    char mappedChar = abc.charAt(mappedIndex);
+//                    System.out.println("  Mapping check: 'A' maps to -> '" + mappedChar + "' (Index " + mappedIndex + ")");
+//                }
+//            }
+//
+//            System.out.println("\n--- Reflectors Loaded ---");
+//            for (BTEReflector bteRef : bteEnigma.getBTEReflectors().getBTEReflector()) {
+//                System.out.println("Reflector ID: " + bteRef.getId());
+//                for (BTEReflect pair : bteRef.getBTEReflect()) {
+//                    System.out.println("  Pair: " + pair.getInput() + " <-> " + pair.getOutput());
+//                }
+//            }
+//
+//            System.out.println("\n--- Test Finished Successfully ---");
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+
+    /// TEST FOR MAKING A MACHINE FROM THE XML
+
+//    public static void main(String[] args) {
+//        try {
+//            System.out.println("--- Starting Step 2: Machine Object Logic Test ---");
+//            XmlMachineConfigLoader loader = new XmlMachineConfigLoader();
+//
+//            // 1. Load the Machine (This creates the MachineImpl object)
+//            Machine machine = loader.load("/Users/noamfishbain/Documents/anigmaMachine/resources/ex1-sanity-small.xml");
+//            System.out.println("Machine object created successfully.");
+//
+//            // בדיקת כמות כוללת
+//            if (machine.getAllAvailableRotors().size() != 3) {
+//                System.out.println("ERROR: Expected 3 rotors, found " + machine.getAllAvailableRotors().size());
+//            }
+//
+//            // --- בדיקת רוטור מס' 1 ---
+//            // XML: id="1" notch="4" (Right A -> Left F)
+//            validateSingleRotor(machine, 1, 3, 5);
+//
+//            // --- בדיקת רוטור מס' 2 ---
+//            // XML: id="2" notch="1" (Right A -> Left E)
+//            // שים לב: ב-XML הוא מופיע אחרון, אבל ה-ID שלו הוא 2.
+//            validateSingleRotor(machine, 2, 0, 4);
+//
+//            // --- בדיקת רוטור מס' 3 ---
+//            // XML: id="3" notch="2" (Right A -> Left A)
+//            validateSingleRotor(machine, 3, 1, 0);
+//
+//            System.out.println("\n--- Step 2 Finished ---");
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    // פונקציית עזר לבדיקת רוטור בודד
+//    private static void validateSingleRotor(Machine machine, int id, int expectedNotchIndex, int expectedMappingForZero) {
+//        System.out.println("\nChecking Rotor ID: " + id + "...");
+//
+//        Rotor r = machine.getAllAvailableRotors().get(id);
+//        if (r == null) {
+//            System.out.println("  [ERROR] Rotor ID " + id + " not found in memory!");
+//            return;
+//        }
+//
+//        // 1. בדיקת ID
+//        if (r.getId() != id) {
+//            System.out.println("  [ERROR] Internal ID mismatch. Key=" + id + ", Value.id=" + r.getId());
+//        }
+//
+//        // 2. בדיקת Notch (המרת XML לאינדקס)
+//        if (r.getNotch() != expectedNotchIndex) {
+//            System.out.println("  [FAIL] Notch: " + r.getNotch() + " (Expected: " + expectedNotchIndex + ")");
+//        } else {
+//            System.out.println("  [OK] Notch: " + r.getNotch());
+//        }
+//
+//        // 3. בדיקת מיפוי (עבור אינדקס 0 בלבד)
+//        int actualMap = r.mapForward(0);
+//        if (actualMap != expectedMappingForZero) {
+//            System.out.println("  [FAIL] Map(0): " + actualMap + " (Expected: " + expectedMappingForZero + ")");
+//        } else {
+//            System.out.println("  [OK] Map(0) -> " + actualMap);
+//        }
+//    }
+
+    /// TEST FOR GETTING MANUAL CONFIG FROM THE USER
+
+//    public static void main(String[] args) {
+//        try {
+//            System.out.println("--- Starting Step 2.1: Manual Configuration Input Logic ---");
+//
+//            // 1. Initialize Engine and Load XML
+//            // We use the Engine now, because the validation logic resides there
+//            logic.engine.EnigmaEngineImpl engine = new logic.engine.EnigmaEngineImpl();
+//            engine.loadMachineFromXml("/Users/noamfishbain/Documents/anigmaMachine/resources/ex1-sanity-small.xml");
+//
+//            System.out.println("Machine loaded successfully.");
+//
+//            // ==========================================
+//            // TEST A: Valid Configuration (Happy Path)
+//            // ==========================================
+//            // Requirement:
+//            // Rotors Input: "3,2,1" (Left-to-Right entry) -> Means Rotor 3 is Left, Rotor 1 is Right.
+//            // Positions Input: "CCC" (Left-to-Right entry) -> First char 'C' is for RIGHTMOST rotor (ID 1).
+//            // Reflector Input: 1 (-> "I")
+//
+//            System.out.println("\n[Test A] Trying Valid Configuration: <3,2,1> <CCC> <1>...");
+//            try {
+//                // Note: setManualCode returns the formatted string code
+//                String result = engine.setManualCode("3,2,1", "CCC", 1);
+//                System.out.println("  Result: " + result);
+//
+//                // Expected internal state check via specs
+//                // If logic is correct:
+//                // Rotor 1 (Right) gets 'C', Rotor 2 (Mid) gets 'C', Rotor 3 (Left) gets 'C'.
+//                // If your engine reverses the list correctly, formatConfiguration should show <3,2,1>.
+//                if (result.contains("<3,2,1>") && result.contains("<I>")) {
+//                    System.out.println("  [PASS] Valid Code Accepted.");
+//                } else {
+//                    System.out.println("  [FAIL] Unexpected formatting. Got: " + result);
+//                }
+//            } catch (Exception e) {
+//                System.out.println("  [FAIL] valid code threw exception: " + e.getMessage());
+//                e.printStackTrace();
+//            }
+//
+//            // ==========================================
+//            // TEST B: Invalid Inputs (Validation Logic)
+//            // ==========================================
+//            System.out.println("\n[Test B] Testing Validations...");
+//
+//            // 1. Duplicate Rotors
+//            checkError(engine, "1,1,2", "ABC", 1, "Duplicate Rotors");
+//
+//            // 2. Missing Rotor ID (ID 5 doesn't exist in sanity-small)
+//            checkError(engine, "1,2,5", "ABC", 1, "Non-existent Rotor ID");
+//
+//            // 3. Wrong Amount of Rotors (Need 3)
+//            checkError(engine, "1,2", "ABC", 1, "Too few Rotors");
+//
+//            // 4. Invalid Position Char ( '!' is not in ABCDEF)
+//            checkError(engine, "3,2,1", "AB!", 1, "Invalid Alphabet Char");
+//
+//            // 5. Mismatched Position Length (2 chars for 3 rotors)
+//            checkError(engine, "3,2,1", "AB", 1, "Positions length mismatch");
+//
+//            // 6. Invalid Reflector ID (Range 1-5)
+//            checkError(engine, "3,2,1", "ABC", 9, "Invalid Reflector ID");
+//
+//            System.out.println("\n--- Step 2.1 Finished ---");
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    // Helper to print PASS/FAIL for error checking
+//    private static void checkError(logic.engine.EnigmaEngineImpl engine, String rotors, String pos, int ref, String testName) {
+//        System.out.print("  Checking " + testName + " (" + rotors + ", " + pos + ")... ");
+//        try {
+//            engine.setManualCode(rotors, pos, ref);
+//            System.out.println("[FAIL] Should have thrown exception but didn't.");
+//        } catch (Exception e) {
+//            System.out.println("[PASS] Caught expected error: " + e.getMessage());
+//        }
+//}
+
+
+    /// TEST FOR ENCRYPTING SINGLE CHAR
+
+    public static void main(String[] args) {
+        try {
+            System.out.println("--- Testing 'Step-After-Process' Theory ---");
+
+            // 1. Load Engine
+            logic.engine.EnigmaEngineImpl engine = new logic.engine.EnigmaEngineImpl();
+            engine.loadMachineFromXml("/Users/noamfishbain/Documents/anigmaMachine/resources/ex1-sanity-small.xml");
+            engine.setDebugMode(true);
+
+            // 2. Configure: Rotors 3,2,1 | Positions CCC | Reflector I
+            System.out.println("Setting Config: <3,2,1><CCC><I>");
+            engine.setManualCode("3,2,1", "CCC", 1);
+
+            // 3. Process 'A'
+            String input = "AABBCCDDEEFF";
+            System.out.println("\n--- Processing Input: " + input + " ---");
+            String output = engine.process(input);
+
+            System.out.println("\n--- Result ---");
+            System.out.println("Input:  " + input);
+            System.out.println("Output: " + output);
+
+            // 4. Verification
+            if ("F".equals(output)) {
+                System.out.println("\n[SUCCESS] !!! Got 'F' !!!");
+                System.out.println("The theory is correct: The machine encrypts first, then steps.");
+            } else {
+                System.out.println("\n[FAIL] Still got '" + output + "' (Expected 'F')");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
