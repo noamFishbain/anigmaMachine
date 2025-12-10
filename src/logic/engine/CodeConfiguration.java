@@ -1,5 +1,6 @@
 package logic.engine;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,7 +42,8 @@ public class CodeConfiguration {
 
     // Returns unmodifiable list of rotor IDs in physical order (left to right)
     public List<Integer> getRotorIdsInOrder() {
-        return rotorIdsInOrder;
+
+         return rotorIdsInOrder;
     }
 
     // Returns unmodifiable list of rotor starting positions (letters), same order as rotor IDs
