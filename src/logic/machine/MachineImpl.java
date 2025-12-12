@@ -1,21 +1,11 @@
 package logic.machine;
 
-import logic.engine.MachineSpecs;
 import logic.loader.dto.MachineDescriptor;
 import logic.loader.dto.ReflectorDescriptor;
 import logic.loader.dto.RotorDescriptor;
-import logic.machine.components.Keyboard;
-import logic.machine.components.KeyboardImpl;
-import logic.machine.components.Rotor;
-import logic.machine.components.RotorImpl;
-import logic.machine.components.Reflector;
-import logic.machine.components.ReflectorImpl;
+import logic.machine.components.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 public class MachineImpl implements Machine {
 
@@ -25,12 +15,7 @@ public class MachineImpl implements Machine {
     private Reflector activeReflector;
     private Map<Integer, Rotor> allAvailableRotors;
     private Map<String, Reflector> allAvailableReflectors;
-    private boolean debugMode = true;
-
-//    // Default constructor for testing
-//    public MachineImpl() {
-//        initSimpleMachine();
-//    }
+    private boolean debugMode = true; // Default to true for logs
 
     // Main constructor from XML Descriptor
     public MachineImpl(MachineDescriptor descriptor) {
@@ -42,109 +27,47 @@ public class MachineImpl implements Machine {
         this.activeReflector = null;
 
         // Load Rotors
-        int keyboardSize = descriptor.getAlphabet().length();
-        for (RotorDescriptor rotorDescriptor : descriptor.getRotors()) {
-            int[] mapping = new int[keyboardSize];
-            for (int i = 0; i < keyboardSize; i++) {
-                mapping[i] = rotorDescriptor.getMapping().get(i);
-            }
-            Rotor rotor = new RotorImpl(
-                    rotorDescriptor.getId(),
-                    mapping,
-                    rotorDescriptor.getNotchPosition() - 1, 0
-            );
-            this.allAvailableRotors.put(rotor.getId(), rotor);
-        }
+        loadRotors(descriptor.getRotors());
 
         // Load Reflectors
-        for (ReflectorDescriptor reflectorDesc : descriptor.getReflectors()) {
+        loadReflectors(descriptor.getReflectors());
+    }
+
+    // Helper method to load rotors from descriptors
+    private void loadRotors(List<RotorDescriptor> descriptors) {
+        int keyboardSize = keyboard.size();
+        for (RotorDescriptor desc : descriptors) {
+            int[] mapping = new int[keyboardSize];
+            for (int i = 0; i < keyboardSize; i++) {
+                mapping[i] = desc.getMapping().get(i);
+            }
+            Rotor rotor = new RotorImpl(desc.getId(), mapping, desc.getNotchPosition() - 1, 0);
+            this.allAvailableRotors.put(rotor.getId(), rotor);
+        }
+    }
+
+    // Helper method to load reflectors from descriptors
+    private void loadReflectors(List<ReflectorDescriptor> descriptors) {
+        int keyboardSize = keyboard.size();
+        for (ReflectorDescriptor desc : descriptors) {
             int[] mapping = new int[keyboardSize];
             Arrays.fill(mapping, -1);
-            for (int[] pair : reflectorDesc.getPairs()) {
-                int inputIndex = pair[0];
-                int outputIndex = pair[1];
-                mapping[inputIndex] = outputIndex;
-                mapping[outputIndex] = inputIndex;
+
+            for (int[] pair : desc.getPairs()) {
+                int input = pair[0];
+                int output = pair[1];
+                mapping[input] = output;
+                mapping[output] = input;
             }
             Reflector reflector = new ReflectorImpl(mapping);
-            this.allAvailableReflectors.put(reflectorDesc.getId(), reflector);
+            this.allAvailableReflectors.put(desc.getId(), reflector);
         }
     }
 
-//    private void initSimpleMachine() {
-//        this.keyboard = new KeyboardImpl("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-//        int size = keyboard.size();
-//        Rotor leftRotor  = new RotorImpl(1, createShiftMapping(size, 1), size - 1, 0);
-//        Rotor middleRotor = new RotorImpl(2, createShiftMapping(size, 2), size - 1, 0);
-//        Rotor rightRotor  = new RotorImpl(3, createShiftMapping(size, 3), size - 1, 0);
-//        // Store as [Right, Middle, Left] to match processing logic
-//        this.activeRotors = new ArrayList<>(Arrays.asList(rightRotor, middleRotor, leftRotor));
-//        this.activeReflector = ReflectorImpl.createBasicReflector(size);
-//        this.processedMessages = 0;
-//    }
-
-//    private int[] createShiftMapping(int keyboardSize, int shift) {
-//        int[] mapping = new int[keyboardSize];
-//        for (int i = 0; i < keyboardSize; i++) {
-//            mapping[i] = (i + shift) % keyboardSize;
-//        }
-//        return mapping;
-//    }
-
     @Override
-    public int getProcessedMessages() {
-        return processedMessages;
-    }
-
-    @Override
-    public List<Character> getCurrentRotorPositions() {
-        List<Character> positions = new ArrayList<>();
-        // Iterate backwards to display Left -> Right
-        for (int i = activeRotors.size() - 1; i >= 0; i--) {
-            Rotor rotor = activeRotors.get(i);
-            positions.add(this.keyboard.getABC().charAt(rotor.getPosition()));
-        }
-        return positions;
-    }
-
-    @Override
-    public MachineSpecs getMachineSpecs() { // todo
-       return null;
-    }
-
-    private void incrementProcessedMessages() {
-        processedMessages++;
-    }
-
-//    @Override
-//    public void configure() {}
-
-//    @Override
-//    public void setInitialCode() {
-//        resetToInitialCode();
-//    }
-
-//    @Override
-//    public void resetToInitialCode() {
-//        // Implementation for reset logic should go here using saved configuration
-//    }
-    // Implement code initialization logic
-    // For now the "initial code" is just the default positions (all zeros)
-//    @Override
-//    public void setInitialCode() {
-//        resetToInitialCode();
-//    }
-
-    // Reset machine to initial configuration
-//    @Override
-//    public void resetToInitialCode() {
-//        // For the simple version: just rebuild the hard-coded machine
-//        initSimpleMachine();
-//    }
-
-    @Override
+    // Processes the entire input string character by character
     public String process(String input) {
-        incrementProcessedMessages();
+        processedMessages++;
         if (input == null || input.isEmpty())
             return "";
 
@@ -153,6 +76,7 @@ public class MachineImpl implements Machine {
 
         logDebug("--- [START] Processing String: %s ---", normalized);
 
+        // Ignore characters not in the keyboard alphabet
         for (char c : normalized.toCharArray()) {
             if (!keyboard.contains(c)) {
                 result.append(c);
@@ -165,7 +89,7 @@ public class MachineImpl implements Machine {
         return result.toString();
     }
 
-    // Handles the complete flow of a single character through the machine.
+    // Handles the complete flow of a single character through the machine
     private char processSingleCharacter(char inputChar) {
         logDebug("\n[CHAR] Processing character: '%c'", inputChar);
         logDebug("  [STATE] Rotors BEFORE process (Left->Right): %s", getCurrentRotorPositions());
@@ -177,34 +101,12 @@ public class MachineImpl implements Machine {
         int currentIndex = keyboard.toIndex(inputChar);
         logDebug("  [IN]    Input index: %d ('%c')", currentIndex, inputChar);
 
-        // Forward Path: Right to Middle to Left
-        // Since index 0 is Rightmost, we iterate 0 to Size
-        for (int i = 0; i < activeRotors.size(); i++) {
-            Rotor rotor = activeRotors.get(i);
-            int indexBefore = currentIndex;
-            currentIndex = rotor.mapForward(currentIndex);
+        // Electrical Path
+        currentIndex = passThroughRotorsForward(currentIndex);
+        currentIndex = passThroughReflector(currentIndex);
+        currentIndex = passThroughRotorsBackward(currentIndex);
 
-            String positionDesc = (i == 0) ? "Right" : (i == activeRotors.size() - 1) ? "Left " : "Mid  ";
-            logDebug("  [FWD]   %s Rotor (ID %d): %d -> %d", positionDesc, rotor.getId(), indexBefore, currentIndex);
-        }
-
-        // Reflector
-        int indexBeforeReflect = currentIndex;
-        currentIndex = activeReflector.getPairedIndex(currentIndex);
-        String reflectorId = (activeReflector instanceof ReflectorImpl) ? String.valueOf(((ReflectorImpl) activeReflector).getId()) : "N/A";
-        logDebug("  [REF]   Reflector ID %s:      %d -> %d", reflectorId, indexBeforeReflect, currentIndex);
-
-        // Backward Path: Left to Middle to Right
-        // We iterate Size to 0
-        for (int i = activeRotors.size() - 1; i >= 0; i--) {
-            Rotor rotor = activeRotors.get(i);
-            int indexBefore = currentIndex;
-            currentIndex = rotor.mapBackward(currentIndex);
-
-            String positionDesc = (i == 0) ? "Right" : (i == activeRotors.size() - 1) ? "Left " : "Mid  ";
-            logDebug("  [BWD]   %s Rotor (ID %d): %d -> %d", positionDesc, rotor.getId(), indexBefore, currentIndex);
-        }
-
+        // Convert back to Char
         char outputChar = keyboard.toChar(currentIndex);
         logDebug("  [OUT]   Final output: %d ('%c')", currentIndex, outputChar);
 
@@ -213,7 +115,8 @@ public class MachineImpl implements Machine {
 
     // Steps the rotor chain: Index 0 is Rightmost and steps first
     private void stepRotorsChain() {
-        if (activeRotors == null || activeRotors.isEmpty()) return;
+        if (activeRotors == null || activeRotors.isEmpty())
+            return;
 
         boolean carry = true;
         for (int i = 0; i < activeRotors.size(); i++) {
@@ -225,7 +128,40 @@ public class MachineImpl implements Machine {
         }
     }
 
-    // Sets configuration ensuring activeRotors is [Right, Middle, Left]
+    private int passThroughRotorsForward(int index) {
+        // Iterate from Right (0) to Left (Size-1)
+        for (int i = 0; i < activeRotors.size(); i++) {
+            Rotor rotor = activeRotors.get(i);
+            int indexBefore = index;
+            index = rotor.mapForward(index);
+
+            String positionDesc = (i == 0) ? "Right" : (i == activeRotors.size() - 1) ? "Left " : "Mid  ";
+            logDebug("  [FWD]   %s Rotor (ID %d): %d -> %d", positionDesc, rotor.getId(), indexBefore, index);
+        }
+        return index;
+    }
+
+    private int passThroughReflector(int index) {
+        int indexBefore = index;
+        index = activeReflector.getPairedIndex(index);
+
+        logDebug("  [REF]   Reflector: %d -> %d", indexBefore, index);
+        return index;
+    }
+
+    private int passThroughRotorsBackward(int index) {
+        // Iterate from Left (Size-1) to Right (0)
+        for (int i = activeRotors.size() - 1; i >= 0; i--) {
+            Rotor rotor = activeRotors.get(i);
+            int indexBefore = index;
+            index = rotor.mapBackward(index);
+
+            logDebug("  [BWD]   %s Rotor (ID %d): %d -> %d", i, rotor.getId(), indexBefore, index);
+        }
+        return index;
+    }
+
+    // Configures the machine with a specific set of rotors, starting positions, and a reflector
     @Override
     public void setConfiguration(List<Integer> rotorIDs, List<Character> startingPositions, String reflectorID) {
         this.activeReflector = allAvailableReflectors.get(reflectorID);
@@ -233,35 +169,91 @@ public class MachineImpl implements Machine {
             throw new IllegalArgumentException("Reflector ID " + reflectorID + " is not available.");
         }
 
-        List<Rotor> selectedRotors = new ArrayList<>();
-        // rotorIDs input is usually Left to Right (e.g., 3, 2, 1).
-        // We need to store them Right to Left (1, 2, 3) for correct processing logic
-        // So we iterate backwards through the input lists.
+        // Configure Rotors (Right to Left), rotorIDs input is Left to Right (3, 2, 1).
+        // We need to store them Right to Left for correct processing logic
+        setupRotors(rotorIDs, startingPositions);
+    }
+
+    private void setupRotors(List<Integer> rotorIDs, List<Character> startingPositions) {
+        this.activeRotors.clear();
+
+        // Configure Rotors (Right to Left)
         for (int i = rotorIDs.size() - 1; i >= 0; i--) {
             int id = rotorIDs.get(i);
             Rotor rotor = allAvailableRotors.get(id);
             if (rotor == null) throw new IllegalArgumentException("Rotor ID " + id + " not found.");
 
             char startChar = startingPositions.get(i);
-            ((RotorImpl) rotor).setPosition(keyboard.toIndex(startChar));
+            rotor.setPosition(keyboard.toIndex(startChar));
 
-            selectedRotors.add(rotor);
+            this.activeRotors.add(rotor);
         }
-        this.activeRotors = selectedRotors;
     }
 
     @Override
-    public void setDebugMode(boolean debugMode) { this.debugMode = debugMode; }
+    public void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode; }
 
     private void logDebug(String format, Object... args) {
+
         if (debugMode) System.out.printf(format + "%n", args);
     }
 
-    @Override
-    public List<Rotor> getActiveRotors() { return activeRotors; }
+    // Helper needed for specs
+    public String formatConfiguration(List<Integer> rotorIDs, List<Character> positions, String reflectorID) {
+        if (rotorIDs.size() != positions.size())
+            return "";
+        StringBuilder sb = new StringBuilder();
+
+        // IDs: <ID, ID, ID> (Print Left to Right)
+        sb.append("<");
+        for( int i = 0; i < rotorIDs.size(); i++) {
+            sb.append(rotorIDs.get(i));
+            if(i != rotorIDs.size() - 1) sb.append(", ");
+        }
+        sb.append(">");
+
+        // Positions: <Pos(Dist), Pos(Dist)> (Print Left to Right)
+        sb.append("<");
+        for (int i = rotorIDs.size() - 1; i >= 0; i--) {
+            int id = rotorIDs.get(i);
+            char pos = positions.get(i);
+            int dist = calculateDistanceFromNotch(id, pos);
+            sb.append(pos).append("(").append(dist).append(")");
+            if (i > 0)
+                sb.append(",");
+        }
+        sb.append(">");
+
+        // Format: <ReflectorID>
+        sb.append("<").append(reflectorID).append(">");
+        return sb.toString();
+    }
+
+    // Helper to calculate distance from notch for display
+    private int calculateDistanceFromNotch(int rotorId, char currentPosChar) {
+        int notchIndex = allAvailableRotors.get(rotorId).getNotch();
+        int currentIndex = keyboard.toIndex(currentPosChar);
+        int size = keyboard.size();
+        return (notchIndex - currentIndex + size) % size;
+    }
 
     @Override
-    public Reflector getActiveReflector() { return activeReflector; }
+    public int getProcessedMessages() {
+        return processedMessages;
+    }
+
+    @Override
+    public List<Character> getCurrentRotorPositions() {
+        List<Character> positions = new ArrayList<>();
+
+        // Iterate backwards to display Left to Right
+        for (int i = activeRotors.size() - 1; i >= 0; i--) {
+            Rotor rotor = activeRotors.get(i);
+            positions.add(this.keyboard.getABC().charAt(rotor.getPosition()));
+        }
+        return positions;
+    }
 
     @Override
     public int getAllRotorsCount() { return allAvailableRotors.size(); }
@@ -279,47 +271,6 @@ public class MachineImpl implements Machine {
     public Keyboard getKeyboard() {
         return keyboard; }
 
-    // Helper needed for specs
-    public String formatConfiguration(List<Integer> rotorIDs, List<Character> positions, String reflectorID) {
-        if (rotorIDs.size() != positions.size()) return "";
-        StringBuilder sb = new StringBuilder();
-
-        // IDs: Print Left to Right
-        sb.append("<");
-        for( int i = 0; i < rotorIDs.size(); i++) {
-            sb.append(rotorIDs.get(i));
-            if(i != rotorIDs.size() - 1) sb.append(", ");
-        }
-        sb.append(">");
-
-        // Positions: Print Left to Right
-        sb.append("<");
-        for (int i = rotorIDs.size() - 1; i >= 0; i--) {
-            int id = rotorIDs.get(i);
-            char pos = positions.get(i);
-            int notch = allAvailableRotors.get(id).getNotch();
-            int dist = (notch - keyboard.toIndex(pos) + keyboard.size()) % keyboard.size();
-            sb.append(pos).append("(").append(dist).append(")");
-            if (i > 0) sb.append(",");
-        }
-        sb.append(">");
-
-        sb.append("<").append(reflectorID).append(">");
-        return sb.toString();
-    }
-
-    // Helper to convert Int ID back to Roman (for display)
-//    private String convertIntToRoman(String id) {
-//        int idRoman = Integer.parseInt(id);
-//        switch (idRoman) {
-//            case 1: return "I";
-//            case 2: return "II";
-//            case 3: return "III";
-//            case 4: return "IV";
-//            case 5: return "V";
-//            default: return id;
-//        }
-//    }
 }
 
 

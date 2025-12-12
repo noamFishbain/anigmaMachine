@@ -2,9 +2,8 @@ package logic.engine;
 
 import logic.loader.MachineConfigLoader;
 import logic.loader.XmlMachineConfigLoader;
-import logic.loader.dto.MachineDescriptor;
+import logic.loader.dto.MachineHistoryRecord;
 import logic.machine.Machine;
-import logic.machine.MachineImpl;
 import logic.machine.components.Rotor;
 
 import java.util.*;
@@ -13,21 +12,15 @@ import java.util.stream.Collectors;
 /**
  * Implementation of the EnigmaEngine interface.
  * This class coordinates between the UI and the internal EnigmaMachine model.
- * It is responsible for:
- *  - Loading XML configuration
- *  - Exposing machine specifications (MachineSpecs)
- *  - Processing text (encryption/decryption)
- *  - Resetting machine state
  */
 public class EnigmaEngineImpl implements EnigmaEngine {
-    private MachineDescriptor descriptor; // Static description of the machine - loaded from XML
     private Machine machine; // Runtime machine instance used to actually process text
     private CodeConfiguration originalCode; // The code that was last chosen by the user (manual/automatic)
     private CodeConfiguration currentCode; // The code after rotor stepping during processing
+    private final List<MachineHistoryRecord> historyList = new ArrayList<>();
 
     public EnigmaEngineImpl() {
         this.machine = null;
-        this.descriptor = null;
     }
 
     @Override
@@ -38,25 +31,24 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         // Reset code information on new load
         this.originalCode = null;
         this.currentCode = null;
+        this.historyList.clear();
     }
 
     // Sets a manual code configuration based on user input
     @Override
     public String setManualCode(String rotorIDsString, String positionsString, int reflectorNum) throws Exception {
-        if (machine == null) {
-            throw new IllegalStateException("Machine is not loaded. Please load an XML file first.");
-        }
+        // Check if machine is loaded
+        ensureMachineLoaded();
 
         // Parsing and Basic Validation
         List<Integer> rotorIDs = parseRotorIDs(rotorIDsString);
-
         String reflectorID = convertIntToRoman(reflectorNum);
         String alphabet = machine.getKeyboard().asString();
 
         // Validations
         validateRotorCount(rotorIDs);
         validateRotorIDs(rotorIDs);
-        validateCharacter(positionsString, rotorIDs.size(), alphabet);
+        validateCharacter(positionsString, rotorIDs.size(), alphabet); //???
         validatePositions(positionsString, rotorIDs.size(), alphabet);
 
         // Position characters must be in the machine's keyboard
@@ -65,12 +57,155 @@ public class EnigmaEngineImpl implements EnigmaEngine {
                 .collect(Collectors.toList());
 
         // Physically configure the machine
-        machine.setConfiguration(rotorIDs, positionsList, reflectorID);
+        updateEngineConfiguration(rotorIDs, positionsList, reflectorID);
 
-        // Create and save the CodeConfiguration object
-        this.originalCode = new CodeConfiguration(rotorIDs, new ArrayList<>(positionsList), reflectorID);
-        this.currentCode = new CodeConfiguration(rotorIDs, new ArrayList<>(positionsList), reflectorID);
-        return machine.formatConfiguration(rotorIDs, positionsList, reflectorID);
+        return formatCode(this.currentCode);
+    }
+
+    @Override
+    public void setAutomaticCode() {
+        // Check if machine is loaded
+        ensureMachineLoaded();
+
+        List<Integer> selectedRotorIDs = selectRandomRotors(3);
+        List<Character> selectedPositions = selectRandomPositions(3);
+        String selectedReflectorID = selectRandomReflector();
+
+        updateEngineConfiguration(selectedRotorIDs, selectedPositions, selectedReflectorID);
+    }
+
+    // Returns a summary of the machine's runtime state and configuration details
+    @Override
+    public MachineSpecs getMachineSpecs() {
+        if (machine == null) {
+            // Return empty specs if no machine is loaded
+            return new MachineSpecs(0, 0, 0, "", "");
+        }
+
+        // Create and return the DTO
+        return new MachineSpecs(
+                machine.getAllRotorsCount(),
+                machine.getAllReflectorsCount(),
+                machine.getProcessedMessages(),
+                formatCode(originalCode),
+                formatCode(currentCode)
+        );
+    }
+
+    // Processes the given text using the Enigma machine
+    @Override
+    public String process(String text) {
+        // Check if machine is loaded
+        ensureMachineLoaded();
+
+        // Capture the configuration BEFORE processing (for history)
+        String currentConfigStr = formatCode(currentCode);
+
+        // Start timer
+        long start = System.nanoTime();
+
+        // Process the text (Delegate to machine)
+        String output = machine.process(text);
+
+        // Stop timer
+        long end = System.nanoTime();
+
+        // Update the current code state (Rotor positions changed)
+        List<Character> newPositions = machine.getCurrentRotorPositions();
+        if (currentCode != null) {
+            currentCode.setRotorPositions(newPositions);
+        }
+
+        // Save to history
+        long duration = end - start;
+        historyList.add(new MachineHistoryRecord(text, output, duration, currentConfigStr));
+        return output;
+    }
+
+    // Resets the machine to its original configuration
+    @Override
+    public void reset() {
+        // Check if machine is loaded
+        ensureMachineLoaded();
+
+        if (originalCode == null) {
+            throw new IllegalStateException("No configuration to reset to. Please set code first (P3 or P4).");
+        }
+
+        // Reset the Machine (Re-apply the original configuration)
+        machine.setConfiguration(
+                originalCode.getRotorIdsInOrder(),
+                new ArrayList<>(originalCode.getRotorPositions()), // a copy of the list
+                originalCode.getReflectorId()
+        );
+
+        // Reset Engine State
+        this.currentCode = new CodeConfiguration(
+                originalCode.getRotorIdsInOrder(),
+                new ArrayList<>(originalCode.getRotorPositions()),
+                originalCode.getReflectorId()
+        );
+    }
+
+    @Override
+    public void setDebugMode(boolean debugMode) {
+        if (machine != null) {
+            machine.setDebugMode(debugMode);
+            System.out.println("Debug mode set to: " + debugMode);
+        }
+    }
+
+    @Override
+    public List<MachineHistoryRecord> getHistory() {
+        return historyList;
+    }
+
+    private void ensureMachineLoaded() {
+        if (machine == null) {
+            throw new IllegalStateException("Machine is not loaded. Please load an XML file first.");
+        }
+    }
+
+    private String formatCode(CodeConfiguration config) {
+        if (config == null) {
+            return "";
+        }
+        return machine.formatConfiguration(
+                config.getRotorIdsInOrder(),
+                config.getRotorPositions(),
+                config.getReflectorId()
+        );
+    }
+
+    private void updateEngineConfiguration(List<Integer> rotorIDs, List<Character> positions, String reflectorID) {
+        // Physically configure the machine
+        machine.setConfiguration(rotorIDs, positions, reflectorID);
+
+        // Save State (Deep Copy)
+        this.originalCode = new CodeConfiguration(rotorIDs, new ArrayList<>(positions), reflectorID);
+        this.currentCode = new CodeConfiguration(rotorIDs, new ArrayList<>(positions), reflectorID);
+    }
+
+    private List<Integer> selectRandomRotors(int count) {
+        List<Integer> availableRotorIDs = new ArrayList<>(machine.getAllAvailableRotors().keySet());
+        Collections.shuffle(availableRotorIDs);
+        return availableRotorIDs.subList(0, count);
+    }
+
+    private List<Character> selectRandomPositions(int count) {
+        String keyboard = machine.getKeyboard().asString();
+        Random random = new Random();
+        List<Character> positions = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            positions.add(keyboard.charAt(random.nextInt(keyboard.length())));
+        }
+        return positions;
+    }
+
+    private String selectRandomReflector() {
+        List<String> availableReflectors = new ArrayList<>(machine.getAllAvailableReflectors().keySet());
+        Random random = new Random();
+        return availableReflectors.get(random.nextInt(availableReflectors.size()));
     }
 
     private void validateRotorCount(List<Integer> rotorIDs) {
@@ -132,7 +267,6 @@ public class EnigmaEngineImpl implements EnigmaEngine {
                 .map(Integer::parseInt)
                 .collect(Collectors.toList());
 
-
         return ids;
     }
 
@@ -145,152 +279,4 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         return roman[num - 1];
     }
 
-    @Override
-    public void setAutomaticCode() {
-        // Check if machine is loaded
-        if (machine == null) {
-            throw new IllegalStateException("Machine is not loaded. Please load an XML file first.");
-        }
-
-        Random random = new Random();
-
-        // Randomly select 3 unique rotors from available rotors
-        List<Integer> availableRotorIDs = new ArrayList<>(machine.getAllAvailableRotors().keySet());
-        List<Integer> selectedRotorIDs = new ArrayList<>();
-
-        // Randomly select rotors until we have 3 unique IDs
-        while (selectedRotorIDs.size() < 3) {
-            int randomIndex = random.nextInt(availableRotorIDs.size());
-            Integer id = availableRotorIDs.get(randomIndex);
-
-            if (!selectedRotorIDs.contains(id)) {
-                selectedRotorIDs.add(id);
-            }
-        }
-
-        // Randomly select starting positions
-        String alphabet = machine.getKeyboard().asString();
-        List<Character> positions = new ArrayList<>();
-
-        for (int i = 0; i < selectedRotorIDs.size(); i++) {
-            positions.add(alphabet.charAt(random.nextInt(alphabet.length())));
-        }
-
-        // Randomly select a reflector
-        List<String> availableReflectors = new ArrayList<>(machine.getAllAvailableReflectors().keySet());
-        String selectedReflectorID = availableReflectors.get(random.nextInt(availableReflectors.size()));
-
-        // Configure Machine (Physically set the rotors and reflector)
-        machine.setConfiguration(selectedRotorIDs, positions, selectedReflectorID);
-
-        // Save State (Update the engine's current code)
-        CodeConfiguration newCode = new CodeConfiguration(selectedRotorIDs, positions, selectedReflectorID);
-        this.originalCode = new CodeConfiguration(selectedRotorIDs, new ArrayList<>(positions), selectedReflectorID);
-        this.currentCode = new CodeConfiguration(selectedRotorIDs, new ArrayList<>(positions), selectedReflectorID);this.currentCode = new CodeConfiguration(selectedRotorIDs, new ArrayList<>(positions), selectedReflectorID);this.currentCode = newCode;
-    }
-
-    // Returns a summary of the machine's runtime state and configuration details
-    @Override
-    public MachineSpecs getMachineSpecs() {
-        if (machine == null) {
-            // Return empty specs if no machine is loaded
-            return new MachineSpecs(0, 0, 0, "", "");
-        }
-
-        // Format the string for the Original Code configuration
-        String originalCodeFormatted = "";
-        if (originalCode != null) {
-            // We delegate the formatting logic to the machine, passing the stored config data
-            originalCodeFormatted = machine.formatConfiguration(
-                    originalCode.getRotorIdsInOrder(),
-                    originalCode.getRotorPositions(),
-                    originalCode.getReflectorId()
-            );
-        }
-
-        // Format the string for the Current Code configuration
-        String currentCodeFormatted = "";
-        if (currentCode != null) {
-            // currentCode is updated in process(), so it reflects the live state
-            currentCodeFormatted = machine.formatConfiguration(
-                    currentCode.getRotorIdsInOrder(),
-                    currentCode.getRotorPositions(),
-                    currentCode.getReflectorId()
-            );
-        }
-
-        // 3. Create and return the DTO
-        return new MachineSpecs(
-                machine.getAllRotorsCount(),      // Ensure you have a getter for this in Machine
-                machine.getAllReflectorsCount(),  // Ensure you have a getter for this in Machine
-                machine.getProcessedMessages(),
-                originalCodeFormatted,
-                currentCodeFormatted
-        );
-    }
-
-    // Processes the given text using the Enigma machine
-    @Override
-    public String process(String text) {
-
-        if (machine == null) {
-            throw new IllegalStateException("Machine is not loaded.");
-        }
-
-//        if (machine.getActiveRotors() == null || machine.getActiveReflector() == null) {
-//            throw new IllegalStateException("Code configuration must be set (P3 or P4) before processing text.");
-//        }
-
-        // Delegate processing to the machine
-        String output = machine.process(text);
-
-        List<Character> newPositions = machine.getCurrentRotorPositions();
-
-        if (currentCode != null) {
-            currentCode.setRotorPositions(newPositions);
-        }
-        // TODO (later):
-        //  - After MachineImpl exposes its current rotor positions,
-        //    we will update 'currentCode' here based on the new positions.
-        //    Something like:
-        //       List<Character> newPositions = machine.getRotorWindowLetters();
-        //       if (originalCode != null) {
-        //           currentCode = originalCode.withRotorPositions(newPositions);
-        //       }
-
-        return output;
-    }
-
-    // Resets the machine to its original configuration
-    @Override
-    public void reset() {
-        if (machine == null) {
-            throw new IllegalStateException("Machine is not loaded.");
-        }
-        if (originalCode == null) {
-            throw new IllegalStateException("No configuration to reset to. Please set code first (P3 or P4).");
-        }
-
-        // Reset the Machine (Re-apply the original configuration)
-        machine.setConfiguration(
-                originalCode.getRotorIdsInOrder(),
-                new ArrayList<>(originalCode.getRotorPositions()), // a copy of the list
-                originalCode.getReflectorId()
-        );
-
-        // Reset Engine State
-        this.currentCode = new CodeConfiguration(
-                originalCode.getRotorIdsInOrder(),
-                new ArrayList<>(originalCode.getRotorPositions()),
-                originalCode.getReflectorId()
-        );
-    }
-
-    @Override
-    public void setDebugMode(boolean debugMode) {
-        if (machine != null) {
-            machine.setDebugMode(debugMode);
-            System.out.println("Debug mode set to: " + debugMode);
-        }
-    }
 }
