@@ -28,10 +28,7 @@ public class ConsoleApp {
         this.scanner = new Scanner(System.in);
     }
 
-    /**
-     * Starts the main menu loop. The method will keep running until
-     * the user chooses the "Exit" option.
-     */
+    // Starts the main menu loop
     public void start() {
         boolean exit = false;
 
@@ -57,6 +54,7 @@ public class ConsoleApp {
                         break;
                     case 5:
                         handleProcessText();
+                        break;
                     case 6:
                         handleReset();
                         break;
@@ -81,10 +79,7 @@ public class ConsoleApp {
         scanner.close();
     }
 
-    /**
-     * Handles option 1: loading the machine configuration from an XML file.
-     * Asks the user for a file path and delegates to the engine.
-     */
+    // Command 1: Loading the machine configuration from an XML file
     private void handleLoadXml() {
         System.out.print("Enter full path to XML file: ");
         String path = ConsoleInputReader.readLine(scanner).trim();
@@ -99,10 +94,7 @@ public class ConsoleApp {
         }
     }
 
-    /**
-     * Handles option 2: displaying the current machine specifications.
-     * Uses MachineSpecs returned by the engine.
-     */
+    // Command 2: Displaying the current machine specifications
     private void handleShowMachineSpecs() {
         try {
             MachineSpecs specs = engine.getMachineSpecs();
@@ -130,18 +122,24 @@ public class ConsoleApp {
     // Command 3: Manual Code
     private void handleManualCode() {
         try {
+
             // Get Rotors
-            System.out.println("Enter Rotor IDs (Left to Right): ");
-            // We assume user enters Left to Right. The Engine reverses it.
-            String rotorIDs = ConsoleInputReader.readLine(scanner);
+            String rotorIDs = readValidRotorIDs();
+
+            // Calculate how many rotors were selected to check for length
+            int rotorsCount = rotorIDs.split("[, ]+").length;
+
+            if (rotorsCount != 3) {
+                System.out.println("Error: You must select exactly 3 rotors. You selected " + rotorsCount + ".");
+                System.out.println("Please try again.");
+                return;
+            }
 
             // Get Positions
-            System.out.println("Enter Initial Positions: ");
-            String positions = ConsoleInputReader.readLine(scanner);
+            String positions = readValidPositions(rotorsCount);
 
             // Get Reflector
-            System.out.println("Enter Reflector ID (1=I, 2=II, 3=III, 4=IV, 5=V): ");
-            int reflectorNum = ConsoleInputReader.readInt(scanner);
+            int reflectorNum = readValidReflectorID();
 
             // Send to Engine
             String result = engine.setManualCode(rotorIDs, positions, reflectorNum);
@@ -153,23 +151,60 @@ public class ConsoleApp {
         }
     }
 
-    // Command 4: Automatic Code
-    private void handleAutomaticCode() {
-        try {
-            engine.setAutomaticCode();
-            MachineSpecs specs = engine.getMachineSpecs();
-            System.out.println("Automatic code generated successfully.");
-            System.out.println("Selected Code: " + specs.getOriginalCodeCompact());
-        } catch (Exception e) {
-            System.out.println("Failed to set automatic code: " + e.getMessage());
+    private String readValidRotorIDs() {
+        while (true) {
+            System.out.println("Enter Rotor IDs (Left to Right, comma separated): ");
+            // We assume user enters Left to Right. The Engine reverses it.
+            String input = ConsoleInputReader.readLine(scanner).trim();
+
+            if (input.isEmpty()) {
+                System.out.println("Error: Input cannot be empty.");
+                continue;
+            }
+
+            if (!input.matches("^[0-9, ]+$")) {
+                System.out.println("Error: Rotor IDs must be numeric. Please try again.");
+                continue;
+            }
+
+            return input;
         }
     }
 
-    /**
-     * Handles option 3: processing input text through the Enigma machine.
-     * At this stage, the engine may simply echo the text back until
-     * encryption logic is implemented.
-     */
+    private String readValidPositions(int expectedLength) {
+        while (true) {
+            System.out.println("Enter Initial Positions: ");
+            String input = ConsoleInputReader.readLine(scanner).trim().toUpperCase();
+
+            if (input.length() != expectedLength) {
+                System.out.println("Error: You entered " + input.length() + " positions, but selected " + expectedLength + " rotors. Please try again.");
+                continue;
+            }
+
+            if (!input.matches("^[A-Z]+$")) {
+                System.out.println("Error: Positions must contain English letters only (A-Z). Please try again.");
+                continue;
+            }
+
+            return input;
+        }
+    }
+
+    private int readValidReflectorID() {
+        while (true) {
+            System.out.println("Enter Reflector ID (1=I, 2=II, 3=III, 4=IV, 5=V): ");
+            int input = ConsoleInputReader.readInt(scanner);
+
+            if (input < 1 || input > 5) {
+                System.out.println("Error: Reflector ID must be between 1 and 5. Please try again.");
+                continue;
+            }
+
+            return input;
+        }
+    }
+
+    // Command 3: Processing input text through the Enigma machine
     private void handleProcessText() {
         System.out.print("Enter text to process: ");
         String input = ConsoleInputReader.readLine(scanner);
@@ -185,11 +220,19 @@ public class ConsoleApp {
         }
     }
 
-    /**
-     * Handles option 4: resetting the machine to its original configuration.
-     * Currently, if reset() is still empty in the engine, this will effectively
-     * be a no-op but the UI flow is already in place.
-     */
+    // Command 4: Automatic Code
+    private void handleAutomaticCode() {
+        try {
+            engine.setAutomaticCode();
+            MachineSpecs specs = engine.getMachineSpecs();
+            System.out.println("Automatic code generated successfully.");
+            System.out.println("Selected Code: " + specs.getOriginalCodeCompact());
+        } catch (Exception e) {
+            System.out.println("Failed to set automatic code: " + e.getMessage());
+        }
+    }
+
+    // Command 5: Resetting the machine to its original configuration
     private void handleReset() {
         try {
             engine.reset();

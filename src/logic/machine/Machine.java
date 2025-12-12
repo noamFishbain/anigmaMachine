@@ -11,7 +11,7 @@ import java.util.Map;
 public interface Machine {
 
     // Load machine structure from descriptor (rotors, reflector, alphabet, etc.)
-    void configure(/* MachineDescriptor descriptor */);
+    // void configure(/* MachineDescriptor descriptor */);
 
     // Set the initial code (rotor positions, selected reflector, etc.)
     // void setInitialCode(/* params for initial code */);

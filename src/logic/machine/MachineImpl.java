@@ -27,10 +27,12 @@ public class MachineImpl implements Machine {
     private Map<String, Reflector> allAvailableReflectors;
     private boolean debugMode = true;
 
-    public MachineImpl() {
-        initSimpleMachine();
-    }
+//    // Default constructor for testing
+//    public MachineImpl() {
+//        initSimpleMachine();
+//    }
 
+    // Main constructor from XML Descriptor
     public MachineImpl(MachineDescriptor descriptor) {
         this.keyboard = new KeyboardImpl(descriptor.getAlphabet());
         this.processedMessages = 0;
@@ -69,25 +71,25 @@ public class MachineImpl implements Machine {
         }
     }
 
-    private void initSimpleMachine() {
-        this.keyboard = new KeyboardImpl("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        int size = keyboard.size();
-        Rotor leftRotor  = new RotorImpl(1, createShiftMapping(size, 1), size - 1, 0);
-        Rotor middleRotor = new RotorImpl(2, createShiftMapping(size, 2), size - 1, 0);
-        Rotor rightRotor  = new RotorImpl(3, createShiftMapping(size, 3), size - 1, 0);
-        // Store as [Right, Middle, Left] to match processing logic
-        this.activeRotors = new ArrayList<>(Arrays.asList(rightRotor, middleRotor, leftRotor));
-        this.activeReflector = ReflectorImpl.createBasicReflector(size);
-        this.processedMessages = 0;
-    }
+//    private void initSimpleMachine() {
+//        this.keyboard = new KeyboardImpl("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+//        int size = keyboard.size();
+//        Rotor leftRotor  = new RotorImpl(1, createShiftMapping(size, 1), size - 1, 0);
+//        Rotor middleRotor = new RotorImpl(2, createShiftMapping(size, 2), size - 1, 0);
+//        Rotor rightRotor  = new RotorImpl(3, createShiftMapping(size, 3), size - 1, 0);
+//        // Store as [Right, Middle, Left] to match processing logic
+//        this.activeRotors = new ArrayList<>(Arrays.asList(rightRotor, middleRotor, leftRotor));
+//        this.activeReflector = ReflectorImpl.createBasicReflector(size);
+//        this.processedMessages = 0;
+//    }
 
-    private int[] createShiftMapping(int keyboardSize, int shift) {
-        int[] mapping = new int[keyboardSize];
-        for (int i = 0; i < keyboardSize; i++) {
-            mapping[i] = (i + shift) % keyboardSize;
-        }
-        return mapping;
-    }
+//    private int[] createShiftMapping(int keyboardSize, int shift) {
+//        int[] mapping = new int[keyboardSize];
+//        for (int i = 0; i < keyboardSize; i++) {
+//            mapping[i] = (i + shift) % keyboardSize;
+//        }
+//        return mapping;
+//    }
 
     @Override
     public int getProcessedMessages() {
@@ -106,26 +108,26 @@ public class MachineImpl implements Machine {
     }
 
     @Override
-    public MachineSpecs getMachineSpecs() {
-        return null;
+    public MachineSpecs getMachineSpecs() { // todo
+       return null;
     }
 
     private void incrementProcessedMessages() {
         processedMessages++;
     }
 
-    @Override
-    public void configure() {}
+//    @Override
+//    public void configure() {}
 
-    @Override
-    public void setInitialCode() {
-        resetToInitialCode();
-    }
+//    @Override
+//    public void setInitialCode() {
+//        resetToInitialCode();
+//    }
 
-    @Override
-    public void resetToInitialCode() {
-        // Implementation for reset logic should go here using saved configuration
-    }
+//    @Override
+//    public void resetToInitialCode() {
+//        // Implementation for reset logic should go here using saved configuration
+//    }
     // Implement code initialization logic
     // For now the "initial code" is just the default positions (all zeros)
 //    @Override
@@ -143,7 +145,8 @@ public class MachineImpl implements Machine {
     @Override
     public String process(String input) {
         incrementProcessedMessages();
-        if (input == null || input.isEmpty()) return "";
+        if (input == null || input.isEmpty())
+            return "";
 
         String normalized = input.toUpperCase();
         StringBuilder result = new StringBuilder();
@@ -162,23 +165,20 @@ public class MachineImpl implements Machine {
         return result.toString();
     }
 
-    /**
-     * Handles the complete flow of a single character through the machine.
-     * Assumes activeRotors is stored as [Right, Middle, Left].
-     */
+    // Handles the complete flow of a single character through the machine.
     private char processSingleCharacter(char inputChar) {
         logDebug("\n[CHAR] Processing character: '%c'", inputChar);
         logDebug("  [STATE] Rotors BEFORE process (Left->Right): %s", getCurrentRotorPositions());
 
-        // 4. Step Rotors (Post-processing step logic)
+        // Step Rotors (Post-processing step logic)
         stepRotorsChain();
         logDebug("  [STEP]  Rotors moved to next position: %s", getCurrentRotorPositions());
 
         int currentIndex = keyboard.toIndex(inputChar);
         logDebug("  [IN]    Input index: %d ('%c')", currentIndex, inputChar);
 
-        // 1. Forward Path: Right -> Middle -> Left
-        // Since index 0 is Rightmost, we iterate 0 -> Size
+        // Forward Path: Right to Middle to Left
+        // Since index 0 is Rightmost, we iterate 0 to Size
         for (int i = 0; i < activeRotors.size(); i++) {
             Rotor rotor = activeRotors.get(i);
             int indexBefore = currentIndex;
@@ -188,14 +188,14 @@ public class MachineImpl implements Machine {
             logDebug("  [FWD]   %s Rotor (ID %d): %d -> %d", positionDesc, rotor.getId(), indexBefore, currentIndex);
         }
 
-        // 2. Reflector
+        // Reflector
         int indexBeforeReflect = currentIndex;
         currentIndex = activeReflector.getPairedIndex(currentIndex);
         String reflectorId = (activeReflector instanceof ReflectorImpl) ? String.valueOf(((ReflectorImpl) activeReflector).getId()) : "N/A";
         logDebug("  [REF]   Reflector ID %s:      %d -> %d", reflectorId, indexBeforeReflect, currentIndex);
 
-        // 3. Backward Path: Left -> Middle -> Right
-        // We iterate Size -> 0
+        // Backward Path: Left to Middle to Right
+        // We iterate Size to 0
         for (int i = activeRotors.size() - 1; i >= 0; i--) {
             Rotor rotor = activeRotors.get(i);
             int indexBefore = currentIndex;
@@ -207,8 +207,6 @@ public class MachineImpl implements Machine {
 
         char outputChar = keyboard.toChar(currentIndex);
         logDebug("  [OUT]   Final output: %d ('%c')", currentIndex, outputChar);
-
-
 
         return outputChar;
     }
@@ -236,8 +234,8 @@ public class MachineImpl implements Machine {
         }
 
         List<Rotor> selectedRotors = new ArrayList<>();
-        // rotorIDs input is usually Left->Right (e.g., 3, 2, 1).
-        // We need to store them Right->Left (1, 2, 3) for correct processing logic.
+        // rotorIDs input is usually Left to Right (e.g., 3, 2, 1).
+        // We need to store them Right to Left (1, 2, 3) for correct processing logic
         // So we iterate backwards through the input lists.
         for (int i = rotorIDs.size() - 1; i >= 0; i--) {
             int id = rotorIDs.get(i);
@@ -251,8 +249,6 @@ public class MachineImpl implements Machine {
         }
         this.activeRotors = selectedRotors;
     }
-
-    // ... [Rest of the getters/setters/formatting methods remain the same] ...
 
     @Override
     public void setDebugMode(boolean debugMode) { this.debugMode = debugMode; }
@@ -280,7 +276,8 @@ public class MachineImpl implements Machine {
     public Map<String, Reflector> getAllAvailableReflectors() { return allAvailableReflectors; }
 
     @Override
-    public Keyboard getKeyboard() { return keyboard; }
+    public Keyboard getKeyboard() {
+        return keyboard; }
 
     // Helper needed for specs
     public String formatConfiguration(List<Integer> rotorIDs, List<Character> positions, String reflectorID) {
@@ -310,17 +307,6 @@ public class MachineImpl implements Machine {
         sb.append("<").append(reflectorID).append(">");
         return sb.toString();
     }
-}
-        // -----------------------------------------------------------
-        // 3. Reflector ID Part: <RomanID>
-        // -----------------------------------------------------------
-        sb.append("<");
-        //sb.append(convertIntToRoman(reflectorID));
-        sb.append(reflectorID);
-        sb.append(">");
-
-        return sb.toString();
-    }
 
     // Helper to convert Int ID back to Roman (for display)
 //    private String convertIntToRoman(String id) {
@@ -334,31 +320,6 @@ public class MachineImpl implements Machine {
 //            default: return id;
 //        }
 //    }
-
-    @Override
-    public int getAllRotorsCount() {
-        return allAvailableRotors.size();
-    }
-
-    @Override
-    public int getAllReflectorsCount() {
-        return allAvailableReflectors.size();
-    }
-
-
-    @Override
-    public Map<Integer, Rotor> getAllAvailableRotors() {
-        return allAvailableRotors;
-    }
-
-    @Override
-    public Map<String, Reflector> getAllAvailableReflectors() {
-        return allAvailableReflectors;
-    }
-
-    @Override
-    public Keyboard getKeyboard() {
-        return keyboard;
-    }
 }
+
 

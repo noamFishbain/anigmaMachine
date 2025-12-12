@@ -56,6 +56,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         // Validations
         validateRotorCount(rotorIDs);
         validateRotorIDs(rotorIDs);
+        validateCharacter(positionsString, rotorIDs.size(), alphabet);
         validatePositions(positionsString, rotorIDs.size(), alphabet);
 
         // Position characters must be in the machine's keyboard
@@ -67,9 +68,8 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         machine.setConfiguration(rotorIDs, positionsList, reflectorID);
 
         // Create and save the CodeConfiguration object
-        CodeConfiguration newCode = new CodeConfiguration(rotorIDs, positionsList, reflectorID);
-        this.originalCode = newCode;
-        this.currentCode = newCode;
+        this.originalCode = new CodeConfiguration(rotorIDs, new ArrayList<>(positionsList), reflectorID);
+        this.currentCode = new CodeConfiguration(rotorIDs, new ArrayList<>(positionsList), reflectorID);
         return machine.formatConfiguration(rotorIDs, positionsList, reflectorID);
     }
 
@@ -107,6 +107,14 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         for (char pos : positionsString.toUpperCase().toCharArray()) {
             if (alphabet.indexOf(pos) == -1) {
                 throw new IllegalArgumentException("Position character '" + pos + "' is not part of the machine's alphabet: " + alphabet);
+            }
+        }
+    }
+
+    private void validateCharacter(String positionsString, int expectedSize, String alphabet) {
+        for (char c : positionsString.toUpperCase().toCharArray()) {
+            if (alphabet.indexOf(c) == -1) {
+                throw new IllegalArgumentException("The char" + c + "is not allowed for this machine. Please insert English letters only.");
             }
         }
     }
@@ -177,8 +185,8 @@ public class EnigmaEngineImpl implements EnigmaEngine {
 
         // Save State (Update the engine's current code)
         CodeConfiguration newCode = new CodeConfiguration(selectedRotorIDs, positions, selectedReflectorID);
-        this.originalCode = newCode;
-        this.currentCode = newCode;
+        this.originalCode = new CodeConfiguration(selectedRotorIDs, new ArrayList<>(positions), selectedReflectorID);
+        this.currentCode = new CodeConfiguration(selectedRotorIDs, new ArrayList<>(positions), selectedReflectorID);this.currentCode = new CodeConfiguration(selectedRotorIDs, new ArrayList<>(positions), selectedReflectorID);this.currentCode = newCode;
     }
 
     // Returns a summary of the machine's runtime state and configuration details
@@ -189,7 +197,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
             return new MachineSpecs(0, 0, 0, "", "");
         }
 
-        // 1. Format the string for the Original Code configuration
+        // Format the string for the Original Code configuration
         String originalCodeFormatted = "";
         if (originalCode != null) {
             // We delegate the formatting logic to the machine, passing the stored config data
@@ -200,7 +208,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
             );
         }
 
-        // 2. Format the string for the Current Code configuration
+        // Format the string for the Current Code configuration
         String currentCodeFormatted = "";
         if (currentCode != null) {
             // currentCode is updated in process(), so it reflects the live state
@@ -266,12 +274,16 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         // Reset the Machine (Re-apply the original configuration)
         machine.setConfiguration(
                 originalCode.getRotorIdsInOrder(),
-                originalCode.getRotorPositions(),
+                new ArrayList<>(originalCode.getRotorPositions()), // a copy of the list
                 originalCode.getReflectorId()
         );
 
         // Reset Engine State
-        this.currentCode = originalCode;
+        this.currentCode = new CodeConfiguration(
+                originalCode.getRotorIdsInOrder(),
+                new ArrayList<>(originalCode.getRotorPositions()),
+                originalCode.getReflectorId()
+        );
     }
 
     @Override
