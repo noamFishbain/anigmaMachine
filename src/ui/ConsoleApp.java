@@ -3,21 +3,12 @@ package ui;
 import logic.engine.EnigmaEngine;
 import logic.engine.EnigmaEngineImpl;
 import logic.engine.MachineSpecs;
+import logic.loader.dto.MachineHistoryRecord;
 
+import java.util.List;
 import java.util.Scanner;
 
-/**
- * Console-based UI layer for interacting with the Enigma engine.
- * This class is responsible for:
- *  - Displaying a menu of available operations (via ConsoleMenu)
- *  - Reading user input from the console (via ConsoleInputReader)
- *  - Delegating actions to the EnigmaEngine implementation
- *  - Printing results and error messages back to the user
- *
- * The console app does NOT contain business logic. All core operations
- * (loading XML, processing text, resetting the machine, etc.) are handled
- * by the engine layer.
- */
+/** Console-based UI layer for interacting with the Enigma engine */
 public class ConsoleApp {
 
     private final EnigmaEngine engine;
@@ -59,8 +50,7 @@ public class ConsoleApp {
                         handleReset();
                         break;
                     case 7:
-                        // handleHistory(); // todo
-                        System.out.println("History not implemented yet.");
+                        handleHistory();
                         break;
                     case 8:
                         exit = true;
@@ -79,7 +69,7 @@ public class ConsoleApp {
         scanner.close();
     }
 
-    // Command 1: Loading the machine configuration from an XML file
+    // Command 1: Loads the machine configuration from an XML file
     private void handleLoadXml() {
         System.out.print("Enter full path to XML file: ");
         String path = ConsoleInputReader.readLine(scanner).trim();
@@ -94,7 +84,7 @@ public class ConsoleApp {
         }
     }
 
-    // Command 2: Displaying the current machine specifications
+    // Command 2: Displays the current machine specifications
     private void handleShowMachineSpecs() {
         try {
             MachineSpecs specs = engine.getMachineSpecs();
@@ -119,7 +109,7 @@ public class ConsoleApp {
         }
     }
 
-    // Command 3: Manual Code
+    // Command 3: Sets up the Manual Code configuration
     private void handleManualCode() {
         try {
 
@@ -173,7 +163,7 @@ public class ConsoleApp {
 
     private String readValidPositions(int expectedLength) {
         while (true) {
-            System.out.println("Enter Initial Positions: ");
+            System.out.println("Enter Initial Positions (English letters only): ");
             String input = ConsoleInputReader.readLine(scanner).trim().toUpperCase();
 
             if (input.length() != expectedLength) {
@@ -204,7 +194,19 @@ public class ConsoleApp {
         }
     }
 
-    // Command 3: Processing input text through the Enigma machine
+    // Command 4: Sets up the Automatic Code configuration
+    private void handleAutomaticCode() {
+        try {
+            engine.setAutomaticCode();
+            MachineSpecs specs = engine.getMachineSpecs();
+            System.out.println("Automatic code generated successfully.");
+            System.out.println("Selected Code: " + specs.getOriginalCodeCompact());
+        } catch (Exception e) {
+            System.out.println("Failed to set automatic code: " + e.getMessage());
+        }
+    }
+
+    // Command 5: Processes input text through the machine
     private void handleProcessText() {
         System.out.print("Enter text to process: ");
         String input = ConsoleInputReader.readLine(scanner);
@@ -220,25 +222,31 @@ public class ConsoleApp {
         }
     }
 
-    // Command 4: Automatic Code
-    private void handleAutomaticCode() {
-        try {
-            engine.setAutomaticCode();
-            MachineSpecs specs = engine.getMachineSpecs();
-            System.out.println("Automatic code generated successfully.");
-            System.out.println("Selected Code: " + specs.getOriginalCodeCompact());
-        } catch (Exception e) {
-            System.out.println("Failed to set automatic code: " + e.getMessage());
-        }
-    }
-
-    // Command 5: Resetting the machine to its original configuration
+    // Command 6: Resets the machine to its original configuration
     private void handleReset() {
         try {
             engine.reset();
             System.out.println("Machine reset to original code.");
         } catch (Exception e) {
             System.out.println("Failed to reset machine: " + e.getMessage());
+        }
+    }
+
+    // Command 7: Displays history and statistics
+    private void handleHistory() {
+        List<MachineHistoryRecord> history = engine.getHistory();
+
+        if (history.isEmpty()) {
+            System.out.println("No history to display yet.");
+            return;
+        }
+
+        System.out.println("----- Machine History -----");
+        int counter = 1;
+        for (MachineHistoryRecord entry : history) {
+            System.out.println("#" + counter++);
+            System.out.println(entry);
+            System.out.println("---------------------------");
         }
     }
 }
