@@ -48,7 +48,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         // Validations
         validateRotorCount(rotorIDs);
         validateRotorIDs(rotorIDs);
-        validateCharacter(positionsString, rotorIDs.size(), alphabet); //???
+        validateCharacter(positionsString, rotorIDs.size(), alphabet);
         validatePositions(positionsString, rotorIDs.size(), alphabet);
 
         // Position characters must be in the machine's keyboard
@@ -113,7 +113,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         // Update the current code state (Rotor positions changed)
         List<Character> newPositions = machine.getCurrentRotorPositions();
         if (currentCode != null) {
-            currentCode.setRotorPositions(newPositions);
+            this.currentCode = this.currentCode.withRotorPositions(newPositions);;
         }
 
         // Save to history
@@ -129,22 +129,18 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         ensureMachineLoaded();
 
         if (originalCode == null) {
-            throw new IllegalStateException("No configuration to reset to. Please set code first (P3 or P4).");
+            throw new IllegalStateException("No configuration to reset to. Please set code first.");
         }
 
-        // Reset the Machine (Re-apply the original configuration)
+        // Reset the Physical Machine
         machine.setConfiguration(
                 originalCode.getRotorIdsInOrder(),
-                new ArrayList<>(originalCode.getRotorPositions()), // a copy of the list
+                originalCode.getRotorPositions(),
                 originalCode.getReflectorId()
         );
 
-        // Reset Engine State
-        this.currentCode = new CodeConfiguration(
-                originalCode.getRotorIdsInOrder(),
-                new ArrayList<>(originalCode.getRotorPositions()),
-                originalCode.getReflectorId()
-        );
+        // Reset the Engine State
+        this.currentCode = this.originalCode;
     }
 
     @Override
@@ -181,9 +177,10 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         // Physically configure the machine
         machine.setConfiguration(rotorIDs, positions, reflectorID);
 
-        // Save State (Deep Copy)
-        this.originalCode = new CodeConfiguration(rotorIDs, new ArrayList<>(positions), reflectorID);
-        this.currentCode = new CodeConfiguration(rotorIDs, new ArrayList<>(positions), reflectorID);
+        // Save State
+        CodeConfiguration newConfig = new CodeConfiguration(rotorIDs, positions, reflectorID);
+        this.originalCode = newConfig;
+        this.currentCode = newConfig;
     }
 
     private List<Integer> selectRandomRotors(int count) {
@@ -236,13 +233,6 @@ public class EnigmaEngineImpl implements EnigmaEngine {
             throw new IllegalArgumentException(
                     "Rotor count (" + expectedSize + ") must match the number of starting positions (" + positionsString.length() + ")."
             );
-        }
-
-        // Check alphabet validity
-        for (char pos : positionsString.toUpperCase().toCharArray()) {
-            if (alphabet.indexOf(pos) == -1) {
-                throw new IllegalArgumentException("Position character '" + pos + "' is not part of the machine's alphabet: " + alphabet);
-            }
         }
     }
 

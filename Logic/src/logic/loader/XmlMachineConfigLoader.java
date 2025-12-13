@@ -12,26 +12,32 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
+/** Validates and loads the Enigma Machine configuration from an XML file.*/
 public class XmlMachineConfigLoader implements MachineConfigLoader {
 
+    // Loads the machine configuration from the specified XML file path.
     @Override
     public Machine load(String filePath) throws Exception {
-        // 1. Validation: Check if file exists and has .xml extension
+        // Validation: Check if file exists and has .xml extension
         File file = new File(filePath);
-        if (!file.exists()) throw new Exception("File not found: " + filePath);
-        if (!filePath.endsWith(".xml")) throw new Exception("File must be an XML file.");
+        if (!file.exists())
+            throw new Exception("File not found: " + filePath);
+        if (!filePath.endsWith(".xml"))
+            throw new Exception("File must be an XML file.");
 
-        // 2. JAXB Unmarshalling: Convert XML file to auto-generated Java objects
+        // JAXB Unmarshalling: Convert XML file to auto-generated Java objects
         BTEEnigma bteEnigma = deserializeFromXML(new FileInputStream(file));
 
-        // 3. Logic Validation: Check against exercise rules (e.g., even ABC length)
+        // Logic Validation: Check against exercise rules (e.g., even ABC length)
         validateMachineSpecs(bteEnigma);
 
-        // 4. Object Conversion: Convert JAXB objects to Domain objects (Machine, Rotor, etc.)
+        // Object Conversion: Convert JAXB objects to Domain objects (Machine, Rotor, etc.)
         return createMachineFromBTE(bteEnigma);
     }
 
+    // Unmarshals the XML input stream into the auto-generated JAXB classes
     private BTEEnigma deserializeFromXML(InputStream in) throws JAXBException {
         // Ensure the context path matches the package of your generated classes
         JAXBContext jc = JAXBContext.newInstance("jaxb.schema.generated");
@@ -39,137 +45,133 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
         return (BTEEnigma) u.unmarshal(in);
     }
 
+    // Validates the logical integrity of the loaded XML data
     private void validateMachineSpecs(BTEEnigma enigma) throws Exception {
         String abc = enigma.getABC().trim();
 
-        // Retrieve necessary lists for validation
-        List<BTERotor> bteRotors = enigma.getBTERotors().getBTERotor();
-        List<BTEReflector> bteReflectors = enigma.getBTEReflectors().getBTEReflector();
+        validateABC(abc);
+        validateRotors(enigma.getBTERotors().getBTERotor(), abc.length());
+        validateReflectors(enigma.getBTEReflectors().getBTEReflector());
+    }
 
-        // Check if ABC length is even
+    // Validation: alphabet length
+    private void validateABC(String abc) throws Exception {
         if (abc.length() % 2 != 0) {
             throw new Exception("ABC size must be even. Current size: " + abc.length());
         }
+    }
 
+    // Validation: Rotors (Count, Sequence, Mapping size)
+    private void validateRotors(List<BTERotor> rotors, int expectedMappingSize) throws Exception {
         // Check if there are enough rotors defined (Minimum 3 expected)
-        if (enigma.getBTERotors().getBTERotor().size() < 3) {
+        if (rotors.size() < 3) {
             throw new Exception("Not enough rotors defined. Machine must define at least 3 rotors.");
         }
 
-        // Checks that rotor IDs are unique and form a running sequence (1 to N)
-        List<Integer> rotorIDs = bteRotors.stream()
-                .map(BTERotor::getId)
-                .sorted()
-                .toList();
-
-        for (int i = 0; i < rotorIDs.size(); i++) {
-            if (rotorIDs.get(i) != (i + 1)) {
-                throw new Exception("Rotor IDs must be unique and form a running sequence (1 to N). Missing ID or hole found.");
+        // Check sequential IDs (1, 2, 3...)
+        List<Integer> ids = rotors.stream().map(BTERotor::getId).sorted().collect(Collectors.toList());
+        for (int i = 0; i < ids.size(); i++) {
+            if (ids.get(i) != (i + 1)) {
+                throw new Exception("Rotor IDs must be unique and sequential (1 to N).");
             }
         }
 
-        // Checks that rotor's positioning list matches ABC size (Mapping integrity check)
-        int expectedSize = abc.length();
-        for (BTERotor bteRotor : bteRotors) {
-            if (bteRotor.getBTEPositioning().size() != expectedSize) {
-                throw new Exception("Rotor ID " + bteRotor.getId() + " positioning count does not match ABC size (" + expectedSize + ").");
-            }
-        }
-
-        // Checks that reflector IDs are unique and form a running Roman sequence (I to N)
-        List<Integer> reflectorDecimalIDs = bteReflectors.stream()
-                .map(BTEReflector::getId) // Extract the Roman ID (String)
-                .map(this::convertRomanToInt) // Convert the String to int
-                .sorted()
-                .toList();
-
-        for (int i = 0; i < reflectorDecimalIDs.size(); i++) {
-            if (reflectorDecimalIDs.get(i) != (i + 1)) {
-                throw new Exception("Reflector IDs must be unique and form a running Roman sequence (I to N). Missing ID or hole found.");
+        // Check mapping size matches ABC
+        for (BTERotor rotor : rotors) {
+            if (rotor.getBTEPositioning().size() != expectedMappingSize) {
+                throw new Exception("Rotor ID " + rotor.getId() + " positioning count does not match ABC size.");
             }
         }
     }
 
+    // Validation: Reflectors (sequential soman IDs)
+    private void validateReflectors(List<BTEReflector> reflectors) throws Exception {
+        // Check Sequential Roman IDs
+        List<Integer> ids = reflectors.stream()
+                .map(r -> convertRomanToInt(r.getId()))
+                .sorted()
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < ids.size(); i++) {
+            if (ids.get(i) != (i + 1)) {
+                throw new Exception("Reflector IDs must be unique and sequential (I to N).");
+            }
+        }
+    }
+
+    // Converts the raw BTEEnigma object into a MachineDescriptor and initializes the MachineImpl
     private Machine createMachineFromBTE(BTEEnigma bteEnigma) {
         String abc = bteEnigma.getABC().trim();
+
+        // Create rotor descriptors
         List<RotorDescriptor> rotorDescriptors = getRotorDescriptors(bteEnigma, abc);
 
-        // --- 2. Create Reflector Descriptors List ---
+        // Create reflector descriptors
         List<ReflectorDescriptor> reflectorDescriptors = new ArrayList<>();
 
-        for (BTEReflector bteReflector : bteEnigma.getBTEReflectors().getBTEReflector()) {
-            String id = bteReflector.getId(); // Keep as String (Roman) for the descriptor
-
-            List<int[]> pairs = new ArrayList<>();
-
-            for (BTEReflect reflect : bteReflector.getBTEReflect()) {
-                int inputIdx = reflect.getInput() - 1;
-                int outputIdx = reflect.getOutput() - 1;
-                pairs.add(new int[]{inputIdx, outputIdx});
-            }
-
-            // Create ReflectorDescriptor
-            ReflectorDescriptor descriptor = new ReflectorDescriptor();
-            descriptor.setId(id); // "I", "II", etc.
-            descriptor.setPairs(pairs);
-
-            reflectorDescriptors.add(descriptor);
+        for (BTEReflector bteRef : bteEnigma.getBTEReflectors().getBTEReflector()) {
+            reflectorDescriptors.add(createReflectorDescriptor(bteRef));
         }
 
-        // --- 3. Set data to MachineDescriptor ---
-        MachineDescriptor machineDescriptor = new MachineDescriptor();
-        machineDescriptor.setABC(abc);
-        machineDescriptor.setRotors(rotorDescriptors);
-        machineDescriptor.setReflectors(reflectorDescriptors);
+        // Get required rotors count
+        int requiredRotorsCount = 3;;
 
-        // --- 4. Return new Machine ---
-        // MachineImpl constructor will now take the descriptor and create the actual Logic components
-        return new MachineImpl(machineDescriptor);
+        // Build the final Descriptor
+        MachineDescriptor descriptor = new MachineDescriptor(
+                abc,
+                rotorDescriptors,
+                reflectorDescriptors,
+                requiredRotorsCount
+        );
+
+        return new MachineImpl(descriptor);
     }
 
-    private static List<RotorDescriptor> getRotorDescriptors(BTEEnigma bteEnigma, String abc) {
-        int abcLength =  abc.length();
-
-        // Create Rotor Descriptors List
-        List<RotorDescriptor> rotorDescriptors = new ArrayList<>();
-
+    // Helper method to parse BTE rotors into RotorDescriptor objects. Calculates the forward mapping array based on the right to left character mapping.
+    private List<RotorDescriptor> getRotorDescriptors(BTEEnigma bteEnigma, String abc) {
+        List<RotorDescriptor> result = new ArrayList<>();
         for (BTERotor bteRotor : bteEnigma.getBTERotors().getBTERotor()) {
-            int id = bteRotor.getId();
-            int notch = bteRotor.getNotch();
-
-            // Calculate mapping array
-            List<Integer> forwardMapping = new ArrayList<>(Collections.nCopies(abcLength, 0));
-            List<BTEPositioning> positions = bteRotor.getBTEPositioning();
-
-            // אנו רצים עם אינדקס i שרץ מ-0 עד 25 (גודל ה-ABC)
-            for (int i = 0; i < positions.size(); i++) {
-                BTEPositioning pos = positions.get(i);
-
-                // אנחנו מסתכלים על האות בעמודה השמאלית
-                char leftChar = pos.getLeft().charAt(0);
-
-                // בודקים מה האינדקס של האות הזו ב-ABC (למשל A->0, B->1)
-                // זה קובע *איפה* נכתוב במערך התוצאה
-                int charIndexInAbc = abc.indexOf(leftChar);
-
-                // אנחנו שמים שם את ה-i (האינדקס של השורה הנוכחית)
-                // אם A הופיעה בשורה 4 (אינדקס 4), אז במיקום 0 במערך יהיה כתוב 4
-                forwardMapping.set(charIndexInAbc, i);
-            }
-
-            // Create RotorDescriptor
-            // Assuming RotorDescriptor has a constructor: (int id, int notch, int[] mapping)
-            // If not, use setters:
-            RotorDescriptor descriptor = new RotorDescriptor();
-            descriptor.setId(id);
-            descriptor.setNotchPosition(notch);
-            descriptor.setMapping(forwardMapping); // You might need to add this method to RotorDescriptor
-
-            rotorDescriptors.add(descriptor);
+            result.add(createSingleRotorDescriptor(bteRotor, abc));
         }
-        return rotorDescriptors;
+        return result;
     }
 
+    private RotorDescriptor createSingleRotorDescriptor(BTERotor bteRotor, String abc) {
+        int id = bteRotor.getId();
+        int notch = bteRotor.getNotch();
+        List<Integer> mapping = calculateForwardMapping(bteRotor.getBTEPositioning(), abc);
+        return new RotorDescriptor(id, mapping, notch);
+    }
+
+    private List<Integer> calculateForwardMapping(List<BTEPositioning> positions, String abc) {
+        List<Integer> mapping = new ArrayList<>(Collections.nCopies(abc.length(), 0));
+
+        for (int i = 0; i < positions.size(); i++) { // (ABC size)
+            BTEPositioning pos = positions.get(i);
+
+            // right char in XML is the input pin (implicit index i)
+            // left char in XML is the output pin
+            char leftChar = pos.getLeft().charAt(0);
+
+            // Find the index of the left char in the alphabet
+            int charIndexInAbc = abc.indexOf(leftChar);
+
+            // This means: If 'A' is at row i, pin 'i' maps to pin 'Index of A'
+            mapping.set(charIndexInAbc, i); // Set at the correct index
+        }
+        return mapping;
+    }
+
+    private ReflectorDescriptor createReflectorDescriptor(BTEReflector bteRef) {
+        List<int[]> pairs = new ArrayList<>();
+        for (BTEReflect r : bteRef.getBTEReflect()) {
+            // XML uses 1-based index, we convert to 0-based
+            pairs.add(new int[]{r.getInput() - 1, r.getOutput() - 1});
+        }
+        return new ReflectorDescriptor(bteRef.getId(), pairs);
+    }
+
+    // Converts Roman numeral strings (I-V) to their integer representation
     private int convertRomanToInt(String roman) {
         switch (roman.toUpperCase()) {
             case "I": return 1;
@@ -385,7 +387,7 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
 
     /// TEST FOR ENCRYPTING SINGLE CHAR
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         try {
             System.out.println("--- Testing 'Step-After-Process' Theory ---");
 
@@ -418,5 +420,5 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+    }*/
 }

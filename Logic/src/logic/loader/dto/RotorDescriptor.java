@@ -1,55 +1,37 @@
 package logic.loader.dto;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Represents a single rotor definition as loaded from the XML configuration.
- * This DTO contains only configuration data and does not implement any logic.
- *
- * Typical fields:
- *  - Rotor ID (unique integer)
- *  - The mapping between input and output positions
- *  - The notch position that triggers the next rotor advance
+ * Represents a static definition of a Rotor, as loaded from the configuration file.
+ * This object is immutable
  */
 public class RotorDescriptor {
 
-    private int id;
-    private List<Integer> mapping;   // placeholder, can be refined later
-    private int notchPosition;
+    private final int id;
+    private final List<Integer> mapping;   // Mapping from input index to output index
+    private final int notchPosition;
 
-    public RotorDescriptor(int id,
-                           List<Integer> mapping,
-                           int notchPosition) {
+    public RotorDescriptor(int id, List<Integer> mapping, int notchPosition) {
         this.id = id;
-        this.mapping = mapping;
+        // Defensive copy to ensure list cannot be modified from outside
+        this.mapping = mapping != null ? Collections.unmodifiableList(mapping) : Collections.emptyList();
         this.notchPosition = notchPosition;
     }
 
-    public RotorDescriptor() {
-
-    }
-
     public int getId() {
+
         return id;
     }
 
     public List<Integer> getMapping() {
+
         return mapping;
     }
 
     public int getNotchPosition() {
+
         return notchPosition;
     }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-    public void setMapping(List<Integer> mapping) {
-        this.mapping = mapping;
-    }
-    public void setNotchPosition(int notchPosition) {
-        this.notchPosition = notchPosition;
-    }
-
-
 }

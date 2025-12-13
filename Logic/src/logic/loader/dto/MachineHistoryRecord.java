@@ -1,5 +1,10 @@
 package logic.loader.dto;
 
+/**
+ * Represents a single record of a processing action in the Enigma machine.
+ * Stores the input, output, time taken, and the configuration snapshot at that moment.
+ * This class is immutable.
+ */
 public class MachineHistoryRecord {
     private final String input;
     private final String output;
