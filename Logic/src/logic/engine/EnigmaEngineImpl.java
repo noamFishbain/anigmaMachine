@@ -5,7 +5,8 @@ import logic.loader.XmlMachineConfigLoader;
 import logic.loader.dto.MachineHistoryRecord;
 import logic.machine.Machine;
 import logic.machine.components.Rotor;
-
+import logic.engine.utils.InputParser;
+import logic.engine.validation.EnigmaCodeValidator;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -18,15 +19,20 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     private CodeConfiguration originalCode; // The code that was last chosen by the user (manual/automatic)
     private CodeConfiguration currentCode; // The code after rotor stepping during processing
     private final List<MachineHistoryRecord> historyList = new ArrayList<>();
+    private final InputParser parser;
+    private EnigmaCodeValidator validator;
 
     public EnigmaEngineImpl() {
+
         this.machine = null;
+        this.parser = new InputParser();
     }
 
     @Override
     public void loadMachineFromXml(String path) throws Exception {
         MachineConfigLoader loader = new XmlMachineConfigLoader();
         this.machine = loader.load(path);
+        this.validator = new EnigmaCodeValidator(this.machine);
 
         // Reset code information on new load
         this.originalCode = null;
@@ -41,15 +47,12 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         ensureMachineLoaded();
 
         // Parsing and Basic Validation
-        List<Integer> rotorIDs = parseRotorIDs(rotorIDsString);
-        String reflectorID = convertIntToRoman(reflectorNum);
+        List<Integer> rotorIDs = parser.parseRotorIDs(rotorIDsString);
+        String reflectorID = parser.convertIntToRoman(reflectorNum);
         String alphabet = machine.getKeyboard().asString();
 
-        // Validations
-        validateRotorCount(rotorIDs);
-        validateRotorIDs(rotorIDs);
-        validateCharacter(positionsString, rotorIDs.size(), alphabet);
-        validatePositions(positionsString, rotorIDs.size(), alphabet);
+        // Validate
+        validator.validateAllManualCode(rotorIDs, positionsString, alphabet);
 
         // Position characters must be in the machine's keyboard
         List<Character> positionsList = positionsString.toUpperCase().chars()
@@ -97,6 +100,10 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     public String process(String text) {
         // Check if machine is loaded
         ensureMachineLoaded();
+
+        if (originalCode == null) { // cannot do P5 before P3 or P4
+            throw new IllegalStateException("Machine configuration has not been set. Please set the code using option 3 or 4 first.");
+        }
 
         // Capture the configuration BEFORE processing (for history)
         String currentConfigStr = formatCode(currentCode);
@@ -203,70 +210,6 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         List<String> availableReflectors = new ArrayList<>(machine.getAllAvailableReflectors().keySet());
         Random random = new Random();
         return availableReflectors.get(random.nextInt(availableReflectors.size()));
-    }
-
-    private void validateRotorCount(List<Integer> rotorIDs) {
-        // Check exactly 3 Rotors
-        if (rotorIDs.size() != 3) {
-            throw new IllegalArgumentException("Invalid rotor count. Require exactly 3 selected rotors, but got: " + rotorIDs.size());
-        }
-    }
-
-    private void validateRotorIDs(List<Integer> rotorIDs) {
-        // Check uniqueness
-        if (new HashSet<>(rotorIDs).size() != rotorIDs.size()) {
-            throw new IllegalArgumentException("Rotor IDs must be unique. Duplicates found in: " + rotorIDs);
-        }
-
-        // Check existence in machine
-        Map<Integer, Rotor> availableRotors = machine.getAllAvailableRotors();
-        for (int id : rotorIDs) {
-            if (!availableRotors.containsKey(id)) {
-                throw new IllegalArgumentException("Rotor ID " + id + " does not exist in the machine. Available IDs: " + availableRotors.keySet());
-            }
-        }
-    }
-
-    private void validatePositions(String positionsString, int expectedSize, String alphabet) {
-        // Check length
-        if (positionsString.length() != expectedSize) {
-            throw new IllegalArgumentException(
-                    "Rotor count (" + expectedSize + ") must match the number of starting positions (" + positionsString.length() + ")."
-            );
-        }
-    }
-
-    private void validateCharacter(String positionsString, int expectedSize, String alphabet) {
-        for (char c : positionsString.toUpperCase().toCharArray()) {
-            if (alphabet.indexOf(c) == -1) {
-                throw new IllegalArgumentException("The char" + c + "is not allowed for this machine. Please insert English letters only.");
-            }
-        }
-    }
-
-    // Converts a comma-separated string of rotor IDs into a List of Integers.
-    // Also reverses the list because UI input is left to right, but we need right to left order
-    private List<Integer> parseRotorIDs(String s) {
-        if (s == null || s.trim().isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        // Split, trim, and parse to Integer
-        List<Integer> ids = Arrays.stream(s.trim().split(","))
-                .map(String::trim)
-                .map(Integer::parseInt)
-                .collect(Collectors.toList());
-
-        return ids;
-    }
-
-    // Converts a decimal reflector number (1-5) into its Roman numeral ID ("I"-"V").
-    private String convertIntToRoman(int num) {
-        if (num < 1 || num > 5) {
-            throw new IllegalArgumentException("Reflector selection must be between 1 and 5.");
-        }
-        String[] roman = {"I", "II", "III", "IV", "V"};
-        return roman[num - 1];
     }
 
 }

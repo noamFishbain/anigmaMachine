@@ -1,10 +1,10 @@
+package logic.machine.components;
+
 /**
  * Represents a single Enigma rotor.
  * Contains the forward and backward wiring, notch position,
  * and current rotation offset. Supports stepping and character mapping.
  */
-package logic.machine.components;
-
 public class RotorImpl implements Rotor {
     private final int id;
     private int position; // The rotor's current rotational offset (changes every time the rotor steps)
@@ -14,37 +14,46 @@ public class RotorImpl implements Rotor {
     private final int keyboardSize; // Total number of symbols the rotor supports
 
     public RotorImpl(int id, int[] forwardMapping, int notchPosition, int initialPosition) {
-        if (forwardMapping == null || forwardMapping.length == 0) {
-            throw new IllegalArgumentException("Rotor mapping cannot be null or empty");
-        }
+        validateInitialInput(forwardMapping);
 
+        // Keep our own defensive copies
         this.id = id;
         this.keyboardSize = forwardMapping.length;
 
-        // Validate that mapping is a proper permutation
         validateMapping(forwardMapping, keyboardSize);
-
-        // Keep our own defensive copies
         this.forwardMapping = forwardMapping.clone();
         this.backwardMapping = buildBackwardMapping(this.forwardMapping, keyboardSize);
 
-        // Validate notch position
-        if (notchPosition < 0 || notchPosition >= keyboardSize) {
+        this.notchPosition = validateAndSetNotch(notchPosition, keyboardSize);
+        this.position = validateAndSetPosition(initialPosition, keyboardSize);
+    }
+
+    private void validateInitialInput(int[] forwardMapping) {
+        if (forwardMapping == null || forwardMapping.length == 0) {
+            throw new IllegalArgumentException("Rotor mapping cannot be null or empty");
+        }
+    }
+
+    // Validate notch position
+    private int validateAndSetNotch(int notchPosition, int size) {
+        if (notchPosition < 0 || notchPosition >= size) {
             throw new IllegalArgumentException(
                     "Notch position out of range: " + notchPosition +
-                            " (valid: 0.." + (keyboardSize - 1) + ")"
+                            " (valid: 0.." + (size - 1) + ")"
             );
         }
-        this.notchPosition = notchPosition;
+        return notchPosition;
+    }
 
-        // Validate and normalize initial position
-        if (initialPosition < 0 || initialPosition >= keyboardSize) {
+    // Validate and normalize initial position
+    private int validateAndSetPosition(int initialPosition, int size) {
+        if (initialPosition < 0 || initialPosition >= size) {
             throw new IllegalArgumentException(
                     "Initial position out of range: " + initialPosition +
-                            " (valid: 0.." + (keyboardSize - 1) + ")"
+                            " (valid: 0.." + (size - 1) + ")"
             );
         }
-        this.position = initialPosition;
+        return initialPosition;
     }
 
     // Ensures the mapping is a valid permutation where each output index appears once
@@ -84,13 +93,9 @@ public class RotorImpl implements Rotor {
     //  Advances the rotor by one position
     @Override
     public boolean step() {
-
-
         position = (position + 1) % keyboardSize;
 
-        boolean atNotchBeforeStep = (this.position == this.notchPosition);
-
-        return atNotchBeforeStep;
+        return (this.position == this.notchPosition);
     }
 
     // Maps an input index through the rotor in the forward direction
@@ -130,7 +135,7 @@ public class RotorImpl implements Rotor {
     }
 
     @Override
-    public int getAlphabetSize() {
+    public int getKeyboardSize() {
         return keyboardSize;
     }
 

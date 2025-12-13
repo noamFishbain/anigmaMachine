@@ -8,44 +8,64 @@ package logic.machine.components;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Defines the Keyboard used by the Enigma machine.
+ * Provides mapping between characters and their numeric indices,
+ * ensuring all components use a consistent character set.
+ */
 public class KeyboardImpl implements Keyboard {
     private final List<Character> symbols;
     private final Map<Character, Integer> charToIndex;
 
+    // Initializes the keyboard from a raw string
     public KeyboardImpl(String rawKeyboard) {
         if (rawKeyboard == null || rawKeyboard.trim().isEmpty()) {
             throw new IllegalArgumentException("Keyboard cannot be null or empty");
         }
 
-        // Removing whitespaces inside the Keyboard string (rawKeyboard)
-        String clean = rawKeyboard.chars()
+        // Create and Validate Symbols List
+        this.symbols = createSymbolsList(rawKeyboard);
+        validateForDuplicates(this.symbols);
+
+        // Create final mapping
+        this.charToIndex = createMapping(this.symbols);
+    }
+
+    private List<Character> createSymbolsList(String rawKeyboard) {
+        // Removing whitespaces and converting to a continuous string
+        String cleanString = rawKeyboard.chars()
                 .mapToObj(c -> (char) c)
                 .filter(c -> !Character.isWhitespace(c))
                 .map(String::valueOf)
                 .collect(Collectors.joining());
 
-        // Convert to list of characters
-        this.symbols = clean.chars()
+        // Convert clean string to list of characters
+        return cleanString.chars()
                 .mapToObj(c -> (char) c)
                 .collect(Collectors.toList());
+    }
 
-        // Check for duplicates using set
+    private void validateForDuplicates(List<Character> symbols) {
+        // Check for duplicates
         Set<Character> charSet = new HashSet<>(symbols);
         if (charSet.size() != symbols.size()) {
-            throw new IllegalArgumentException("Keyboard contains invalid symbols");
+            throw new IllegalArgumentException("Keyboard contains duplicate symbols.");
         }
+    }
 
-        // Mapping char to index
-        this.charToIndex = new HashMap<>();
+    private Map<Character, Integer> createMapping(List<Character> symbols) {
+        Map<Character, Integer> mapping = new HashMap<>();
         int index = 0;
         for (char c : symbols) {
-            charToIndex.put(c, index++);
+            mapping.put(c, index++);
         }
+        return mapping;
     }
 
     // Return the number of symbols in the Keyboard
     @Override
     public int size() {
+
         return symbols.size();
     }
 
