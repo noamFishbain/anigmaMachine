@@ -2,11 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/anigmaMachine.iml" filepath="$PROJECT_DIR$/anigmaMachine.iml" />
-      <module fileurl="file://$PROJECT_DIR$/src/logic/machine/components/components.iml" filepath="$PROJECT_DIR$/src/logic/machine/components/components.iml" />
-      <module fileurl="file://$PROJECT_DIR$/src/logic/logic.iml" filepath="$PROJECT_DIR$/src/logic/logic.iml" />
-      <module fileurl="file://$PROJECT_DIR$/src/logic/machine/machine.iml" filepath="$PROJECT_DIR$/src/logic/machine/machine.iml" />
-      <module fileurl="file://$PROJECT_DIR$/src/ui/ui.iml" filepath="$PROJECT_DIR$/src/ui/ui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ConsoleUI/ConsoleUI.iml" filepath="$PROJECT_DIR$/ConsoleUI/ConsoleUI.iml" />
+      <module fileurl="file://$PROJECT_DIR$/EnigmaMachine.iml" filepath="$PROJECT_DIR$/EnigmaMachine.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Logic/Logic.iml" filepath="$PROJECT_DIR$/Logic/Logic.iml" />
     </modules>
   </component>
 </project>

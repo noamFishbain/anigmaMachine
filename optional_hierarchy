@@ -1,5 +1,22 @@
 EnigmaProject/
+├── EnigmaProject.iml
+├── lib/
+│   ├── jaxb-api.jar
+│   ├── jaxb-core.jar
+│   ├── jaxb-impl.jar
+│   └── שאר קבצי ה jar
+│
 └── src/
+    ├── META-INF/
+    │   └── MANIFEST.MF
+    │
+    ├── jaxb/
+    │   └── schema/
+    │       └── generated/
+    │           ├── CTEEnigma.java
+    │           ├── CTERotor.java
+    │           └── קבצים שנוצרו אוטומטי
+    │
     ├── logic/
     │   ├── engine/
     │   │   ├── CodeConfiguration.java
@@ -26,8 +43,11 @@ EnigmaProject/
     │           ├── Rotor.java
     │           └── RotorImpl.java
     │
-    └── ui/
-        ├── ConsoleApp.java
-        ├── ConsoleInputReader.java
-        ├── ConsoleMenu.java
-        └── Main.java
+    ├── ui/
+    │   ├── ConsoleApp.java
+    │   ├── ConsoleInputReader.java
+    │   ├── ConsoleMenu.java
+    │   └── Main.java
+    │
+    └── resources/
+        └── ex1-sanity-small.xml

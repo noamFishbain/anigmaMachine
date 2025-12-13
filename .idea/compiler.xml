@@ -6,7 +6,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="anigmaMachine" options="--add-exports jdk.jfr/jdk.jfr.internal.management=ALL-UNNAMED" />
+      <module name="EnigmaMachine" options="--add-exports jdk.jfr/jdk.jfr.internal.management=ALL-UNNAMED" />
     </option>
   </component>
 </project>
