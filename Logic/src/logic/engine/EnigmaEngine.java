@@ -5,13 +5,13 @@ import logic.loader.dto.MachineHistoryRecord;
 import java.util.List;
 
 /**
- * EnigmaEngine is the "brain" that coordinates between:
- *  - The loaded machine structure (from the XML file)
- *  - The current runtime Enigma machine instance
- *  - Code configuration (manual or automatic)
- *  - History & statistics (later)
- *
- * The UI communicates ONLY with this interface
+ * EnigmaEngine is the "brain" of the application
+ * It coordinates between:
+ * - The loaded machine structure (from XML)
+ * - The current runtime machine instance
+ * - Code configuration (manual or automatic)
+ * - Statistics and history
+ * The UI layer communicates only with this interface
  */
 public interface EnigmaEngine {
 
