@@ -1,32 +1,34 @@
-/**
- * Represents a single Enigma rotor.
- * Contains the forward and backward wiring, notch position,
- * and current rotation offset. Supports stepping and character mapping.
- */
 package logic.machine.components;
 
+/**
+ * Represents a single Enigma rotor.
+ * Updated to use a Position-Based Mapping (Lookup Table) instead of simple index arrays.
+ * This ensures the logic holds true regardless of the XML row order.
+ */
 public class RotorImpl implements Rotor {
     private final int id;
-    private int position; // The rotor's current rotational offset (changes every time the rotor steps)
-    private final int notchPosition; // The notch position at which this rotor triggers the next rotor to advance
-    private final int[] forwardMapping; // Forward wiring: maps input index to output index
-    private final int[] backwardMapping; // Backward wiring: the inverse of forwardMapping
-    private final int keyboardSize; // Total number of symbols the rotor supports
+    private int position; // The rotor's current rotational offset
+    private final int notchPosition; // The notch position to trigger the next rotor
 
-    public RotorImpl(int id, int[] forwardMapping, int notchPosition, int initialPosition) {
-        if (forwardMapping == null || forwardMapping.length == 0) {
+    // The normalized location table: [ABC Size][2]
+    // index = The Character Index (A=0, B=1...)
+    // col[0] = Row index in the RIGHT column
+    // col[1] = Row index in the LEFT column
+    private final int[][] letterPositions;
+
+    private final int keyboardSize; // Total alphabet size
+
+    // Constructor updated to accept int[][] mapping
+    public RotorImpl(int id, int[][] letterPositions, int notchPosition, int initialPosition) {
+        if (letterPositions == null || letterPositions.length == 0) {
             throw new IllegalArgumentException("Rotor mapping cannot be null or empty");
         }
 
         this.id = id;
-        this.keyboardSize = forwardMapping.length;
+        this.keyboardSize = letterPositions.length;
 
-        // Validate that mapping is a proper permutation
-        validateMapping(forwardMapping, keyboardSize);
-
-        // Keep our own defensive copies
-        this.forwardMapping = forwardMapping.clone();
-        this.backwardMapping = buildBackwardMapping(this.forwardMapping, keyboardSize);
+        // Save the mapping table directly
+        this.letterPositions = letterPositions;
 
         // Validate notch position
         if (notchPosition < 0 || notchPosition >= keyboardSize) {
@@ -37,7 +39,7 @@ public class RotorImpl implements Rotor {
         }
         this.notchPosition = notchPosition;
 
-        // Validate and normalize initial position
+        // Validate initial position
         if (initialPosition < 0 || initialPosition >= keyboardSize) {
             throw new IllegalArgumentException(
                     "Initial position out of range: " + initialPosition +
@@ -47,41 +49,7 @@ public class RotorImpl implements Rotor {
         this.position = initialPosition;
     }
 
-    // Ensures the mapping is a valid permutation where each output index appears once
-    private void validateMapping(int[] mapping, int size) {
-        boolean[] seen = new boolean[size];
-
-        for (int i = 0; i < size; i++) {
-            int target = mapping[i];
-
-            if (target < 0 || target >= size) {
-                throw new IllegalArgumentException(
-                        "Rotor mapping out of range: mapping[" + i + "] = " + target
-                );
-            }
-
-            if (seen[target]) {
-                throw new IllegalArgumentException(
-                        "Rotor mapping is not a permutation. Value " + target +
-                                " appears more than once."
-                );
-            }
-            seen[target] = true;
-        }
-    }
-
-    // Builds the inverse (backward) mapping of the given forward mapping
-    private int[] buildBackwardMapping(int[] forward, int size) {
-        int[] backward = new int[size];
-
-        for (int i = 0; i < size; i++) {
-            int j = forward[i];
-            backward[j] = i;
-        }
-        return backward;
-    }
-
-    //  Advances the rotor by one position
+    // Advances the rotor by one position
     @Override
     public boolean step() {
 
@@ -93,31 +61,59 @@ public class RotorImpl implements Rotor {
         return atNotchBeforeStep;
     }
 
-    // Maps an input index through the rotor in the forward direction
+    // Maps an input index through the rotor in the forward direction (Right -> Left)
     @Override
-    public int mapForward(int index) {
-        // adjust for current position
-        int shifted = (index + position) % keyboardSize;
+    public int mapForward(int inputIndex) {
+        // 1. Calculate physical contact point on the Right side
+        int contactIndex = (inputIndex + position) % keyboardSize;
 
-        // pass through wiring
-        int wired = forwardMapping[shifted];
+        // 2. Lookup: Find which character connects to this Right contact index
+        int outputLeftIndex = -1;
 
-        // revert the positional shift
-        return (wired - position + keyboardSize) % keyboardSize;
+        for (int charId = 0; charId < keyboardSize; charId++) {
+            // Check column 0 (Right Position)
+            if (letterPositions[charId][0] == contactIndex) {
+                // Found the character! Get its Left Position (column 1)
+                outputLeftIndex = letterPositions[charId][1];
+                break;
+            }
+        }
+
+        if (outputLeftIndex == -1) {
+            throw new RuntimeException("Mapping error: Connection not found in Rotor " + id);
+        }
+
+        // 3. Calculate relative output index (Exit position - Offset)
+        return (outputLeftIndex - position + keyboardSize) % keyboardSize;
     }
 
-    // Maps an input index through the rotor in the backward direction
+    // Maps an input index through the rotor in the backward direction (Left -> Right)
     @Override
-    public int mapBackward(int index) {
-        // adjust for current position
-        int shifted = (index + position) % keyboardSize;
+    public int mapBackward(int inputIndex) {
+        // 1. Calculate physical contact point on the Left side
+        int contactIndex = (inputIndex + position) % keyboardSize;
 
-        // pass through inverse wiring
-        int wired = backwardMapping[shifted];
+        // 2. Lookup: Find which character connects to this Left contact index
+        int outputRightIndex = -1;
 
-        // revert the shift
-        return (wired - position + keyboardSize) % keyboardSize;
+        for (int charId = 0; charId < keyboardSize; charId++) {
+            // Check column 1 (Left Position)
+            if (letterPositions[charId][1] == contactIndex) {
+                // Found the character! Get its Right Position (column 0)
+                outputRightIndex = letterPositions[charId][0];
+                break;
+            }
+        }
+
+        if (outputRightIndex == -1) {
+            throw new RuntimeException("Mapping error: Connection not found in Rotor " + id);
+        }
+
+        // 3. Calculate relative output index (Exit position - Offset)
+        return (outputRightIndex - position + keyboardSize) % keyboardSize;
     }
+
+
 
     @Override
     public int getId() {
@@ -139,7 +135,10 @@ public class RotorImpl implements Rotor {
         if (newPosition < 0 || newPosition >= keyboardSize) {
             throw new IllegalArgumentException("Position out of range: " + newPosition);
         }
-        this.position = newPosition;
+
+            // Check column 0 (Right Position)
+
+            this.position = letterPositions[newPosition][0];
     }
 
     @Override

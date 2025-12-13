@@ -35,13 +35,16 @@ public class MachineImpl implements Machine {
 
     // Helper method to load rotors from descriptors
     private void loadRotors(List<RotorDescriptor> descriptors) {
-        int keyboardSize = keyboard.size();
+        // UPDATED: Now handles the 2D array mapping directly
         for (RotorDescriptor desc : descriptors) {
-            int[] mapping = new int[keyboardSize];
-            for (int i = 0; i < keyboardSize; i++) {
-                mapping[i] = desc.getMapping().get(i);
-            }
+
+            // 1. Get the new [ABC][2] location mapping directly from the descriptor
+            int[][] mapping = desc.getMapping();
+
+            // 2. Create the Rotor using the updated constructor that accepts int[][]
+            // Note: We subtract 1 from the notch position because XML is 1-based, but our internal logic is 0-based.
             Rotor rotor = new RotorImpl(desc.getId(), mapping, desc.getNotchPosition() - 1, 0);
+
             this.allAvailableRotors.put(rotor.getId(), rotor);
         }
     }
@@ -171,6 +174,7 @@ public class MachineImpl implements Machine {
 
         // Configure Rotors (Right to Left), rotorIDs input is Left to Right (3, 2, 1).
         // We need to store them Right to Left for correct processing logic
+
         setupRotors(rotorIDs, startingPositions);
     }
 
@@ -187,6 +191,7 @@ public class MachineImpl implements Machine {
             rotor.setPosition(keyboard.toIndex(startChar));
 
             this.activeRotors.add(rotor);
+
         }
     }
 
@@ -215,12 +220,12 @@ public class MachineImpl implements Machine {
 
         // Positions: <Pos(Dist), Pos(Dist)> (Print Left to Right)
         sb.append("<");
-        for (int i = rotorIDs.size() - 1; i >= 0; i--) {
+        for (int i = 0 ; i < rotorIDs.size();  i++) {
             int id = rotorIDs.get(i);
             char pos = positions.get(i);
             int dist = calculateDistanceFromNotch(id, pos);
             sb.append(pos).append("(").append(dist).append(")");
-            if (i > 0)
+            if (i < rotorIDs.size())
                 sb.append(",");
         }
         sb.append(">");
@@ -272,5 +277,3 @@ public class MachineImpl implements Machine {
         return keyboard; }
 
 }
-
-

@@ -56,6 +56,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
                 .mapToObj(c -> (char) c)
                 .collect(Collectors.toList());
 
+
         // Physically configure the machine
         updateEngineConfiguration(rotorIDs, positionsList, reflectorID);
 
