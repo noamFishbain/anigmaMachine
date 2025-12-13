@@ -10,21 +10,22 @@ public class ReflectorImpl implements Reflector {
     // Reflection mapping: for each index i, reflectionMapping[i] = paired index
     private final int[] reflectionMapping;
     private int id;
+
     public ReflectorImpl(int[] reflectionMapping, int id) {
         validateMapping(reflectionMapping);     // ensure mapping is legal
         this.reflectionMapping = reflectionMapping.clone();
         this.id = id;
     }
+
     public ReflectorImpl(int[] reflectionMapping) {
         validateMapping(reflectionMapping);     // ensure mapping is legal
         this.reflectionMapping = reflectionMapping.clone();
     }
 
-
-
      // Return total number of symbols handled by the reflector
      @Override
      public int getKeyboardSize() {
+
         return reflectionMapping.length;
     }
 
@@ -36,26 +37,19 @@ public class ReflectorImpl implements Reflector {
                     "Index out of range for reflector: " + index
             );
         }
+
         return reflectionMapping[index];
     }
 
     @Override
     public int getId() {
+
         return id;
     }
 
     // Factory method to create a basic reflector where:
     public static ReflectorImpl createBasicReflector(int keyboardSize) { // Before XML use
-        if (keyboardSize <= 0) {
-            throw new IllegalArgumentException(
-                    "keyboard size must be positive."
-            );
-        }
-        if (keyboardSize % 2 != 0) {
-            throw new IllegalArgumentException(
-                    "keyboard size must be even (required for pairing)."
-            );
-        }
+        validateSize(keyboardSize);
 
         int[] mapping = new int[keyboardSize];
 
@@ -73,39 +67,43 @@ public class ReflectorImpl implements Reflector {
         int mappingLength = mapping.length;
 
         // Reflector must have even size
-        if (mappingLength % 2 != 0) {
-            throw new IllegalArgumentException(
-                    "Reflector size must be even. Got: " + mappingLength
-            );
-        }
+        validateSize(mappingLength);
 
         // Validate basic constraints
-        for (int i = 0; i < mappingLength; i++) {
-            int j = mapping[i];
-
-            // The index must be within the valid range of the array
-            if (j < 0 || j >= mappingLength) {
-                throw new IllegalArgumentException(
-                        "Reflector mapping out of range: mapping[" + i + "] = " + j
-                );
-            }
-
-            // No self-mapping allowed
-            if (j == i) {
-                throw new IllegalArgumentException(
-                        "Reflector cannot map index to itself: " + i
-                );
-            }
-        }
+        validateBasicConstraints(mapping, mappingLength);
 
         // Validate symmetry: if i -> j then j -> i
-        for (int i = 0; i < mappingLength; i++) {
+        validateSymmetry(mapping, mappingLength);
+    }
+
+    private void validateBasicConstraints(int[] mapping, int length) {
+        for (int i = 0; i < length; i++) {
+            int j = mapping[i];
+
+            if (j < 0 || j >= length) {
+                throw new IllegalArgumentException("Reflector mapping out of range: mapping[" + i + "] = " + j);
+            }
+            if (j == i) {
+                throw new IllegalArgumentException("Reflector cannot map index to itself: " + i);
+            }
+        }
+    }
+
+    private void validateSymmetry(int[] mapping, int length) {
+        for (int i = 0; i < length; i++) {
             int j = mapping[i];
             if (mapping[j] != i) {
-                throw new IllegalArgumentException(
-                        "Reflector mapping is not symmetric: " + i + " <-> " + j
-                );
+                throw new IllegalArgumentException("Reflector mapping is not symmetric: " + i + " <-> " + j);
             }
+        }
+    }
+
+    private static void validateSize(int size) {
+        if (size <= 0) {
+            throw new IllegalArgumentException("Keyboard size must be positive.");
+        }
+        if (size % 2 != 0) {
+            throw new IllegalArgumentException("Keyboard size must be even (required for pairing). Got: " + size);
         }
     }
 }

@@ -13,10 +13,12 @@ public class ConsoleApp {
 
     private final EnigmaEngine engine;
     private final Scanner scanner;
+    private final ConsoleInputCollector inputCollector;
 
     public ConsoleApp() {
         this.engine = new EnigmaEngineImpl();
         this.scanner = new Scanner(System.in);
+        this.inputCollector = new ConsoleInputCollector(scanner);
     }
 
     // Starts the main menu loop
@@ -114,7 +116,7 @@ public class ConsoleApp {
         try {
 
             // Get Rotors
-            String rotorIDs = readValidRotorIDs();
+            String rotorIDs = inputCollector.readValidRotorIDs();
 
             // Calculate how many rotors were selected to check for length
             int rotorsCount = rotorIDs.split("[, ]+").length;
@@ -126,10 +128,10 @@ public class ConsoleApp {
             }
 
             // Get Positions
-            String positions = readValidPositions(rotorsCount);
+            String positions = inputCollector.readValidPositions(rotorsCount);
 
             // Get Reflector
-            int reflectorNum = readValidReflectorID();
+            int reflectorNum = inputCollector.readValidReflectorID();
 
             // Send to Engine
             String result = engine.setManualCode(rotorIDs, positions, reflectorNum);
@@ -138,59 +140,6 @@ public class ConsoleApp {
         } catch (Exception e) {
             System.out.println("Failed to set manual code: " + e.getMessage());
             System.out.println("Please try again.");
-        }
-    }
-
-    private String readValidRotorIDs() {
-        while (true) {
-            System.out.println("Enter Rotor IDs (Left to Right, comma separated): ");
-            // We assume user enters Left to Right. The Engine reverses it.
-            String input = ConsoleInputReader.readLine(scanner).trim();
-
-            if (input.isEmpty()) {
-                System.out.println("Error: Input cannot be empty.");
-                continue;
-            }
-
-            if (!input.matches("^[0-9, ]+$")) {
-                System.out.println("Error: Rotor IDs must be numeric. Please try again.");
-                continue;
-            }
-
-            return input;
-        }
-    }
-
-    private String readValidPositions(int expectedLength) {
-        while (true) {
-            System.out.println("Enter Initial Positions (English letters only): ");
-            String input = ConsoleInputReader.readLine(scanner).trim().toUpperCase();
-
-            if (input.length() != expectedLength) {
-                System.out.println("Error: You entered " + input.length() + " positions, but selected " + expectedLength + " rotors. Please try again.");
-                continue;
-            }
-
-            if (!input.matches("^[A-Z]+$")) {
-                System.out.println("Error: Positions must contain English letters only (A-Z). Please try again.");
-                continue;
-            }
-
-            return input;
-        }
-    }
-
-    private int readValidReflectorID() {
-        while (true) {
-            System.out.println("Enter Reflector ID (1=I, 2=II, 3=III, 4=IV, 5=V): ");
-            int input = ConsoleInputReader.readInt(scanner);
-
-            if (input < 1 || input > 5) {
-                System.out.println("Error: Reflector ID must be between 1 and 5. Please try again.");
-                continue;
-            }
-
-            return input;
         }
     }
 
