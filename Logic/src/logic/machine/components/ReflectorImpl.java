@@ -3,9 +3,11 @@
  * Provides a fixed, symmetric mapping that redirects the signal
  * back through the rotors in reverse. Has no moving parts.
  */
-package logic.machine.components;
 
-public class ReflectorImpl implements Reflector {
+package logic.machine.components;
+import java.io.Serializable;
+
+public class ReflectorImpl implements Reflector,Serializable {
 
     // Reflection mapping: for each index i, reflectionMapping[i] = paired index
     private final int[] reflectionMapping;

@@ -24,7 +24,7 @@ public class ConsoleApp {
     // Starts the main menu loop
     public void start() {
         boolean exit = false;
-
+        ConsoleMenu.printWelcomeMessage();
         while (!exit) {
             ConsoleMenu.printMainMenu();
 
@@ -54,12 +54,20 @@ public class ConsoleApp {
                     case 7:
                         handleHistory();
                         break;
+                    // --- NEW CASES ---
                     case 8:
+                        handleSaveGame();
+                        break;
+                    case 9:
+                        handleLoadGame();
+                        break;
+                    // -----------------
+                    case 10:
                         exit = true;
                         System.out.println("Exiting application. Goodbye!");
                         break;
                     default:
-                        System.out.println("Invalid option. Please choose 1-8.");
+                        System.out.println("Invalid option. Please choose 1-10.");
                 }
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
@@ -71,14 +79,15 @@ public class ConsoleApp {
         scanner.close();
     }
 
-    // Command 1: Loads the machine configuration from an XML file
+    // --- Existing Methods (1-7) ---
+
     private void handleLoadXml() {
         System.out.print("Enter full path to XML file: ");
         String path = ConsoleInputReader.readLine(scanner).trim();
 
         try {
             engine.loadMachineFromXml(path);
-            engine.setDebugMode(true);
+            engine.setDebugMode(false);
             System.out.println("Machine configuration loaded successfully.");
         } catch (Exception e) {
             System.out.println("Failed to load machine from XML:");
@@ -86,7 +95,6 @@ public class ConsoleApp {
         }
     }
 
-    // Command 2: Displays the current machine specifications
     private void handleShowMachineSpecs() {
         try {
             MachineSpecs specs = engine.getMachineSpecs();
@@ -111,39 +119,27 @@ public class ConsoleApp {
         }
     }
 
-    // Command 3: Sets up the Manual Code configuration
     private void handleManualCode() {
         try {
-
-            // Get Rotors
             String rotorIDs = inputCollector.readValidRotorIDs();
-
-            // Calculate how many rotors were selected to check for length
             int rotorsCount = rotorIDs.split("[, ]+").length;
 
-            if (rotorsCount != 3) {
+            if (rotorsCount != 3) { // Assume 3 is standard for this exercise level
                 System.out.println("Error: You must select exactly 3 rotors. You selected " + rotorsCount + ".");
-                System.out.println("Please try again.");
                 return;
             }
 
-            // Get Positions
             String positions = inputCollector.readValidPositions(rotorsCount);
-
-            // Get Reflector
             int reflectorNum = inputCollector.readValidReflectorID();
 
-            // Send to Engine
             String result = engine.setManualCode(rotorIDs, positions, reflectorNum);
             System.out.println("Code set successfully: " + result);
 
         } catch (Exception e) {
             System.out.println("Failed to set manual code: " + e.getMessage());
-            System.out.println("Please try again.");
         }
     }
 
-    // Command 4: Sets up the Automatic Code configuration
     private void handleAutomaticCode() {
         try {
             engine.setAutomaticCode();
@@ -155,8 +151,12 @@ public class ConsoleApp {
         }
     }
 
-    // Command 5: Processes input text through the machine
     private void handleProcessText() {
+        // Validation: Check if machine is ready
+        if (!isMachineReadyForOperation()) {
+            return;
+        }
+
         System.out.print("Enter text to process: ");
         String input = ConsoleInputReader.readLine(scanner);
 
@@ -171,7 +171,6 @@ public class ConsoleApp {
         }
     }
 
-    // Command 6: Resets the machine to its original configuration
     private void handleReset() {
         try {
             engine.reset();
@@ -181,10 +180,8 @@ public class ConsoleApp {
         }
     }
 
-    // Command 7: Displays history and statistics
     private void handleHistory() {
         List<MachineHistoryRecord> history = engine.getHistory();
-
         if (history.isEmpty()) {
             System.out.println("No history to display yet.");
             return;
@@ -197,5 +194,68 @@ public class ConsoleApp {
             System.out.println(entry);
             System.out.println("---------------------------");
         }
+    }
+
+    // --- New Bonus Methods (8-9) ---
+
+    // Command 8: Saves the current machine state to a file
+    private void handleSaveGame() {
+        System.out.print("Enter path to save file (without extension): ");
+        String path = ConsoleInputReader.readLine(scanner).trim();
+
+        try {
+            // Note: If no machine is currently loaded, the Engine implementation might throw an exception,
+            // or save a null machine. Ideally, check if machine exists before saving.
+            engine.saveGame(path);
+            System.out.println("Game saved successfully to " + path + ".dat");
+        } catch (Exception e) {
+            System.out.println("Failed to save game:");
+            System.out.println(e.getMessage());
+        }
+    }
+
+    // Command 9: Loads a previously saved machine state
+    private void handleLoadGame() {
+        System.out.print("Enter path to load file (without extension): ");
+        String path = ConsoleInputReader.readLine(scanner).trim();
+
+        try {
+            engine.loadGame(path);
+            // Re-enable debug mode after load if desired, or keep saved state
+            engine.setDebugMode(true);
+            System.out.println("Game loaded successfully from " + path + ".dat");
+        } catch (java.io.FileNotFoundException e) {
+            // Specific handling for when the file does not exist
+            System.out.println("Error: The file '" + path + ".dat' was not found.");
+            System.out.println("Please make sure you have saved a machine state before trying to load.");
+        } catch (Exception e) {
+            // General error handling (corrupted file, class version mismatch, etc.)
+            System.out.println("Failed to load game:");
+            System.out.println(e.getMessage());
+        }
+    }
+    // Helper method to validate machine state before processing
+    private boolean isMachineReadyForOperation() {
+        // 1. Check if the machine is loaded (XML file loaded)
+        try {
+            MachineSpecs specs = engine.getMachineSpecs();
+            if (specs.getTotalRotors() == 0) {
+                System.out.println("Error: No machine loaded. Please load XML first (Option 1).");
+                return false;
+            }
+        } catch (Exception e) {
+            // Handle case where engine throws exception because machine object is null
+            System.out.println("Error: No machine loaded. Please load XML first (Option 1).");
+            return false;
+        }
+
+        // 2. Check if the code configuration is set (Rotors, Positions, Reflector selected)
+        if (!engine.isCodeConfigurationSet()) {
+            System.out.println("Error: Machine configuration has not been set.");
+            System.out.println("Please set the code manually (Option 3) or automatically (Option 4).");
+            return false;
+        }
+
+        return true;
     }
 }

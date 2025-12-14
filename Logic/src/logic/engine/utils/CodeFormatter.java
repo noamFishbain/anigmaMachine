@@ -5,12 +5,13 @@ import logic.machine.components.Rotor;
 
 import java.util.List;
 import java.util.Map;
+import java.io.Serializable;
 
 /**
  * Utility class responsible for formatting the machine configuration (rotors, positions, reflector)
  * into a structured string format, including distance from the notch calculation.
  */
-public class CodeFormatter {
+public class CodeFormatter implements  Serializable {
 
     private final Map<Integer, Rotor> allAvailableRotors;
     private final Keyboard keyboard;
@@ -37,13 +38,13 @@ public class CodeFormatter {
 
         // Positions: <Pos(Dist), Pos(Dist)> (Print Left to Right)
         sb.append("<");
-        for (int i = rotorIDs.size() - 1; i >= 0; i--) {
+        for (int i = 0; i < rotorIDs.size(); i++){
             int id = rotorIDs.get(i);
             char pos = positions.get(i);
             int dist = calculateDistanceFromNotch(id, pos);
 
             sb.append(pos).append("(").append(dist).append(")");
-            if (i > 0)
+            if (i != rotorIDs.size() - 1)
                 sb.append(",");
         }
         sb.append(">");

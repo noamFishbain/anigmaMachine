@@ -7,13 +7,14 @@ package logic.machine.components;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.io.Serializable;
 
 /**
  * Defines the Keyboard used by the Enigma machine.
  * Provides mapping between characters and their numeric indices,
  * ensuring all components use a consistent character set.
  */
-public class KeyboardImpl implements Keyboard {
+public class KeyboardImpl implements Keyboard, Serializable {
     private final List<Character> symbols;
     private final Map<Character, Integer> charToIndex;
 
