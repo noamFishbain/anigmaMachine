@@ -5,7 +5,9 @@ package logic.loader.dto;
  * Stores the input, output, time taken, and the configuration snapshot at that moment.
  * This class is immutable.
  */
-public class MachineHistoryRecord {
+import java.io.Serializable;
+
+public class MachineHistoryRecord implements Serializable {
     private final String input;
     private final String output;
     private final long timeElapsed; // nano-sec

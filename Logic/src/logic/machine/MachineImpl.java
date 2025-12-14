@@ -6,8 +6,9 @@ import logic.loader.dto.RotorDescriptor;
 import logic.machine.components.*;
 import logic.engine.utils.CodeFormatter;
 import java.util.*;
+import java.io.Serializable;
 
-public class MachineImpl implements Machine {
+public class MachineImpl implements Machine, Serializable {
 
     private int processedMessages = 0;
     private Keyboard keyboard;
@@ -15,7 +16,7 @@ public class MachineImpl implements Machine {
     private Reflector activeReflector;
     private Map<Integer, Rotor> allAvailableRotors;
     private Map<String, Reflector> allAvailableReflectors;
-    private boolean debugMode = true; // Default to true for logs
+    private boolean debugMode = false; // Default to true for logs
     private CodeFormatter formatter;
 
     // Main constructor from XML Descriptor

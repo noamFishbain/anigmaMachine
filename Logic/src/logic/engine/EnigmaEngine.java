@@ -2,6 +2,7 @@ package logic.engine;
 
 import logic.loader.dto.MachineHistoryRecord;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -38,4 +39,9 @@ public interface EnigmaEngine {
 
     // Returns the list of processed messages history and statistics
     List<MachineHistoryRecord> getHistory();
+
+    void loadGame(String pathWithoutExtension) throws IOException, ClassNotFoundException;
+    void saveGame(String pathWithoutExtension) throws IOException;
+    boolean isCodeConfigurationSet();
+
 }

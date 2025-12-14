@@ -1,11 +1,11 @@
 package logic.machine.components;
-
+import java.io.Serializable;
 /**
  * Represents a single Enigma rotor.
  * Updated to use a Position-Based Mapping (Lookup Table) instead of simple index arrays.
  * This ensures the logic holds true regardless of the XML row order.
  */
-public class RotorImpl implements Rotor {
+public class RotorImpl implements Rotor , Serializable {
     private final int id;
     private int position; // The rotor's current rotational offset
     private final int notchPosition; // The notch position to trigger the next rotor
@@ -52,15 +52,17 @@ public class RotorImpl implements Rotor {
         return notchPosition;
     }
 
-        // Validate initial position
-        if (initialPosition < 0 || initialPosition >= keyboardSize) {
+    private  int validateAndSetPosition(int position, int size) {
+        if (position < 0 || position >= size) {
             throw new IllegalArgumentException(
-                    "Initial position out of range: " + initialPosition +
+                    "Initial position out of range: " + position +
                             " (valid: 0.." + (size - 1) + ")"
             );
         }
-        return initialPosition;
+        return position;
     }
+
+
 
     // Advances the rotor by one position
     @Override

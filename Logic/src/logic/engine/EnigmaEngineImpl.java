@@ -7,6 +7,8 @@ import logic.machine.Machine;
 import logic.machine.components.Rotor;
 import logic.engine.utils.InputParser;
 import logic.engine.validation.EnigmaCodeValidator;
+
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -19,8 +21,8 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     private CodeConfiguration originalCode; // The code that was last chosen by the user (manual/automatic)
     private CodeConfiguration currentCode; // The code after rotor stepping during processing
     private final List<MachineHistoryRecord> historyList = new ArrayList<>();
-    private final InputParser parser;
-    private EnigmaCodeValidator validator;
+    private transient InputParser parser;
+    private transient EnigmaCodeValidator validator;
 
     public EnigmaEngineImpl() {
 
@@ -105,7 +107,11 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         if (originalCode == null) { // cannot do P5 before P3 or P4
             throw new IllegalStateException("Machine configuration has not been set. Please set the code using option 3 or 4 first.");
         }
-
+        // Trim whitespaces (Remove leading/trailing spaces)
+        String cleanedText = text.trim();
+        // Validate characters against the Alphabet
+        // We convert to UpperCase because the machine is case-insensitive, but the keyboard stores Uppercase.
+        validateInputCharacters(cleanedText);
         // Capture the configuration BEFORE processing (for history)
         String currentConfigStr = formatCode(currentCode);
 
@@ -211,6 +217,67 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         List<String> availableReflectors = new ArrayList<>(machine.getAllAvailableReflectors().keySet());
         Random random = new Random();
         return availableReflectors.get(random.nextInt(availableReflectors.size()));
+    }
+    // ------------------- Bonus: Save & Load Game -------------------
+
+    @Override
+    public void saveGame(String pathWithoutExtension) throws IOException {
+        // 1. Add binary extension to the file path
+        String fullPath = pathWithoutExtension + ".dat";
+
+        // 2. Open file for writing (Serialization)
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fullPath))) {
+            // 3. Serialize critical objects in order
+            out.writeObject(this.machine);
+            out.writeObject(this.historyList);
+            out.writeObject(this.originalCode);
+            out.writeObject(this.currentCode);
+        }
+    }
+
+    @Override
+    public boolean isCodeConfigurationSet() {
+        return this.originalCode != null;
+    }
+
+    @Override
+    public void loadGame(String pathWithoutExtension) throws IOException, ClassNotFoundException {
+        // 1. Add binary extension to the file path
+        String fullPath = pathWithoutExtension + ".dat";
+
+        // 2. Open file for reading (Deserialization)
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fullPath))) {
+            // 3. Deserialize objects in the EXACT same order they were written
+            this.machine = (Machine) in.readObject();
+
+            // Handle History List (since it is final, we cannot re-assign it)
+            List<MachineHistoryRecord> loadedHistory = (List<MachineHistoryRecord>) in.readObject();
+            this.historyList.clear();
+            this.historyList.addAll(loadedHistory);
+
+            this.originalCode = (CodeConfiguration) in.readObject();
+            this.currentCode = (CodeConfiguration) in.readObject();
+
+            // 4. Re-initialize transient fields (Component restoration)
+
+            // Re-create the validator with the newly loaded machine instance
+            this.validator = new EnigmaCodeValidator(this.machine);
+
+            // Re-create the parser if needed (stateless component)
+            if (this.parser == null) {
+                this.parser = new InputParser();
+            }
+        }
+    }
+    // Helper method to check if all characters exist in the alphabet
+    private void validateInputCharacters(String text) {
+        // We iterate over the input (converted to UpperCase to match the keyboard)
+        for (char c : text.toUpperCase().toCharArray()) {
+            if (!machine.getKeyboard().contains(c)) {
+                throw new IllegalArgumentException("Input contains invalid character: '" + c + "'" +
+                        "\nThe machine only accepts: " + machine.getKeyboard().getABC());
+            }
+        }
     }
 
 }

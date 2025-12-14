@@ -3,9 +3,10 @@ package logic.engine;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.io.Serializable;
 
 /** Represents a single code configuration of the Enigma machine.*/
-public class CodeConfiguration {
+public class CodeConfiguration implements Serializable {
 
     private final List<Integer> rotorIdsInOrder; // Rotor IDs from LEFT to RIGHT
     private final List<Character> rotorPositions; // Starting positions of each rotor, same order as rotorIdsInOrder
