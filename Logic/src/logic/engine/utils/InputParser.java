@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import logic.exceptions.EnigmaException;
 /**
  * Utility class responsible for parsing raw string inputs
  * into structured data types needed by the engine.
@@ -29,7 +29,7 @@ public class InputParser {
     // Converts a decimal reflector number (1-5) into its Roman numeral ID ("I"-"V").
     public String convertIntToRoman(int num) {
         if (num < 1 || num > 5) {
-            throw new IllegalArgumentException("Reflector selection must be between 1 and 5.");
+            throw new EnigmaException(EnigmaException.ErrorCode.USER_INVALID_REFLECTOR_INPUT);
         }
         String[] roman = {"I", "II", "III", "IV", "V"};
         return roman[num - 1];

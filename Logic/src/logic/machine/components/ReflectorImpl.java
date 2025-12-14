@@ -6,7 +6,7 @@
 
 package logic.machine.components;
 import java.io.Serializable;
-
+import logic.exceptions.EnigmaException;
 public class ReflectorImpl implements Reflector,Serializable {
 
     // Reflection mapping: for each index i, reflectionMapping[i] = paired index
@@ -35,9 +35,8 @@ public class ReflectorImpl implements Reflector,Serializable {
     @Override
     public int getPairedIndex(int index) {
         if (index < 0 || index >= reflectionMapping.length) {
-            throw new IllegalArgumentException(
-                    "Index out of range for reflector: " + index
-            );
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                    REFLECTOR_OUT_OF_RANGE,index);
         }
 
         return reflectionMapping[index];
@@ -83,10 +82,11 @@ public class ReflectorImpl implements Reflector,Serializable {
             int j = mapping[i];
 
             if (j < 0 || j >= length) {
-                throw new IllegalArgumentException("Reflector mapping out of range: mapping[" + i + "] = " + j);
+                throw new EnigmaException(EnigmaException.ErrorCode.REFLECTOR_MAPPING_OUT_OF_BOUNDS
+                ,i,j);
             }
             if (j == i) {
-                throw new IllegalArgumentException("Reflector cannot map index to itself: " + i);
+                throw new EnigmaException(EnigmaException.ErrorCode.REFLECTOR_SELF_MAPPING,i);
             }
         }
     }
@@ -95,17 +95,18 @@ public class ReflectorImpl implements Reflector,Serializable {
         for (int i = 0; i < length; i++) {
             int j = mapping[i];
             if (mapping[j] != i) {
-                throw new IllegalArgumentException("Reflector mapping is not symmetric: " + i + " <-> " + j);
+                throw new EnigmaException(EnigmaException.ErrorCode.REFLECTOR_NOT_SYMMETRIC,i,j);
             }
         }
     }
 
     private static void validateSize(int size) {
         if (size <= 0) {
-            throw new IllegalArgumentException("Keyboard size must be positive.");
+            throw new EnigmaException(EnigmaException.ErrorCode.REFLECTOR_SIZE_MUST_BE_POSITIVE);
         }
         if (size % 2 != 0) {
-            throw new IllegalArgumentException("Keyboard size must be even (required for pairing). Got: " + size);
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                    REFLECTOR_SIZE_ODD,size);
         }
     }
 }

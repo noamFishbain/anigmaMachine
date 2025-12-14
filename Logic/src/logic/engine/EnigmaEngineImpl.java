@@ -1,5 +1,6 @@
 package logic.engine;
 
+import logic.exceptions.EnigmaException;
 import logic.loader.MachineConfigLoader;
 import logic.loader.XmlMachineConfigLoader;
 import logic.loader.dto.MachineHistoryRecord;
@@ -105,7 +106,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         ensureMachineLoaded();
 
         if (originalCode == null) { // cannot do P5 before P3 or P4
-            throw new IllegalStateException("Machine configuration has not been set. Please set the code using option 3 or 4 first.");
+            throw new EnigmaException(EnigmaException.ErrorCode.CONFIG_NOT_SET);
         }
         // Trim whitespaces (Remove leading/trailing spaces)
         String cleanedText = text.trim();
@@ -143,7 +144,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         ensureMachineLoaded();
 
         if (originalCode == null) {
-            throw new IllegalStateException("No configuration to reset to. Please set code first.");
+            throw new EnigmaException(EnigmaException.ErrorCode.NO_CONFIGURATION_TO_RESET);
         }
 
         // Reset the Physical Machine
@@ -172,7 +173,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
 
     private void ensureMachineLoaded() {
         if (machine == null) {
-            throw new IllegalStateException("Machine is not loaded. Please load an XML file first.");
+            throw new EnigmaException(EnigmaException.ErrorCode.MACHINE_NOT_LOADED);
         }
     }
 
@@ -274,8 +275,9 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         // We iterate over the input (converted to UpperCase to match the keyboard)
         for (char c : text.toUpperCase().toCharArray()) {
             if (!machine.getKeyboard().contains(c)) {
-                throw new IllegalArgumentException("Input contains invalid character: '" + c + "'" +
-                        "\nThe machine only accepts: " + machine.getKeyboard().getABC());
+                throw new EnigmaException(EnigmaException.ErrorCode.
+                        INPUT_INVALID_CHARACTER,
+                        c,machine.getKeyboard().getABC());
             }
         }
     }

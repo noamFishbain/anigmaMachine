@@ -1,5 +1,7 @@
 package ui;
 
+import logic.exceptions.EnigmaException;
+
 import java.util.Scanner;
 
 /**
@@ -21,12 +23,12 @@ public class ConsoleInputCollector {
             String input = ConsoleInputReader.readLine(scanner).trim();
 
             if (input.isEmpty()) {
-                System.out.println("Error: Input cannot be empty.");
+                System.out.println(EnigmaException.ErrorCode.USER_INPUT_EMPTY);
                 continue;
             }
 
             if (!input.matches("^[0-9, ]+$")) {
-                System.out.println("Error: Rotor IDs must be numeric. Please try again.");
+                System.out.println(EnigmaException.ErrorCode.USER_INPUT_NOT_NUMBER);
                 continue;
             }
 
@@ -39,17 +41,33 @@ public class ConsoleInputCollector {
             System.out.println("Enter Initial Positions (English letters only): ");
             String input = ConsoleInputReader.readLine(scanner).trim().toUpperCase();
 
+        try {
+            // Check 1: Length Validation using centralized Exception
             if (input.length() != expectedLength) {
-                System.out.println("Error: You entered " + input.length() + " positions, but selected " + expectedLength + " rotors. Please try again.");
-                continue;
+                throw new EnigmaException(
+                        EnigmaException.ErrorCode.USER_POSITION_COUNT_MISMATCH,
+                        expectedLength,
+                        input.length()
+                );
             }
 
+            // Check 2: Character Validation
+            // We assume basic A-Z for initial input before validating against the machine's specific keyboard
             if (!input.matches("^[A-Z]+$")) {
-                System.out.println("Error: Positions must contain English letters only (A-Z). Please try again.");
-                continue;
+                // Find the first invalid char for the error message
+                for(char c : input.toCharArray()) {
+                    if(c < 'A' || c > 'Z') {
+                        throw new EnigmaException(EnigmaException.ErrorCode.INPUT_INVALID_CHARACTER, c, "A-Z");
+                    }
+                }
             }
 
             return input;
+
+        } catch (EnigmaException e) {
+            // Catch the centralized exception and display the formatted message
+            System.out.println(e.getMessage());
+        }
         }
     }
 
@@ -57,13 +75,17 @@ public class ConsoleInputCollector {
         while (true) {
             System.out.println("Enter Reflector ID (1=I, 2=II, 3=III, 4=IV, 5=V): ");
             int input = ConsoleInputReader.readInt(scanner);
-
-            if (input < 1 || input > 5) {
-                System.out.println("Error: Reflector ID must be between 1 and 5. Please try again.");
-                continue;
+            try {
+                if (input < 1 || input > 5) {
+                    throw new EnigmaException(EnigmaException.ErrorCode.USER_INVALID_REFLECTOR_INPUT);
+                }
+                return input;
+            }
+            catch (EnigmaException e) {
+                System.out.println(e.getMessage());
             }
 
-            return input;
+
         }
     }
 }

@@ -1,5 +1,6 @@
 package logic.machine;
 
+import logic.exceptions.EnigmaException;
 import logic.loader.dto.MachineDescriptor;
 import logic.loader.dto.ReflectorDescriptor;
 import logic.loader.dto.RotorDescriptor;
@@ -172,7 +173,8 @@ public class MachineImpl implements Machine, Serializable {
     public void setConfiguration(List<Integer> rotorIDs, List<Character> startingPositions, String reflectorID) {
         this.activeReflector = allAvailableReflectors.get(reflectorID);
         if (this.activeReflector == null) {
-            throw new IllegalArgumentException("Reflector ID " + reflectorID + " is not available.");
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                 USER_REFLECTOR_NOT_FOUND, reflectorID );
         }
 
         // Configure Rotors (Right to Left), rotorIDs input is Left to Right (3, 2, 1).
@@ -188,8 +190,13 @@ public class MachineImpl implements Machine, Serializable {
         for (int i = rotorIDs.size() - 1; i >= 0; i--) {
             int id = rotorIDs.get(i);
             Rotor rotor = allAvailableRotors.get(id);
-            if (rotor == null) throw new IllegalArgumentException("Rotor ID " + id + " not found.");
-
+            if (rotor == null) {
+                throw new EnigmaException(
+                        EnigmaException.ErrorCode.USER_ROTOR_NOT_FOUND,
+                        id,
+                        allAvailableRotors.keySet()
+                );
+            }
             char startChar = startingPositions.get(i);
             rotor.setPosition(keyboard.toIndex(startChar));
 

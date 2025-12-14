@@ -1,5 +1,7 @@
 package ui;
 
+import logic.exceptions.EnigmaException;
+
 import java.util.Scanner;
 
 /**
@@ -13,7 +15,7 @@ public class ConsoleInputReader {
             try {
                 return Integer.parseInt(scanner.nextLine().trim());
             } catch (NumberFormatException e) {
-                System.out.print("Invalid number. Please try again: ");
+                System.out.print(EnigmaException.ErrorCode.USER_INPUT_NOT_NUMBER.getMessageTemplate());
             }
         }
     }

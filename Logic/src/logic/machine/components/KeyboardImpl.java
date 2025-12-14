@@ -4,7 +4,7 @@
  * ensuring all components use a consistent character set.
  */
 package logic.machine.components;
-
+import logic.exceptions.EnigmaException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.io.Serializable;
@@ -21,7 +21,7 @@ public class KeyboardImpl implements Keyboard, Serializable {
     // Initializes the keyboard from a raw string
     public KeyboardImpl(String rawKeyboard) {
         if (rawKeyboard == null || rawKeyboard.trim().isEmpty()) {
-            throw new IllegalArgumentException("Keyboard cannot be null or empty");
+            throw new EnigmaException(EnigmaException.ErrorCode.KEYBOARD_EMPTY);
         }
 
         // Create and Validate Symbols List
@@ -50,7 +50,7 @@ public class KeyboardImpl implements Keyboard, Serializable {
         // Check for duplicates
         Set<Character> charSet = new HashSet<>(symbols);
         if (charSet.size() != symbols.size()) {
-            throw new IllegalArgumentException("Keyboard contains duplicate symbols.");
+            throw new EnigmaException(EnigmaException.ErrorCode.KEYBOARD_DUPLICATE_SYMBOLS);
         }
     }
 
@@ -74,8 +74,10 @@ public class KeyboardImpl implements Keyboard, Serializable {
     @Override
     public int toIndex(char c) {
         return Optional.ofNullable(charToIndex.get(c))
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Character '" + c + "' is not part of this Keyboard"));
+                .orElseThrow(() -> new EnigmaException(EnigmaException.ErrorCode.
+                        KEYBOARD_INVALID_CHAR,
+                        c));
+
     }
 
     // Return the character of the given index
@@ -84,8 +86,10 @@ public class KeyboardImpl implements Keyboard, Serializable {
         return Optional.of(index)
                 .filter(i -> i >= 0 && i < symbols.size())
                 .map(symbols::get)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Index " + index + " is out of range (0.." + (symbols.size() - 1) + ")"));
+                .orElseThrow(() -> new EnigmaException(EnigmaException.ErrorCode.
+                        KEYBOARD_OUT_OF_RANGE,
+                        index,symbols.size()-1
+                        ));
     }
 
     // Checks whether a given character exists in the Keyboard
