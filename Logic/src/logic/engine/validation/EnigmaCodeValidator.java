@@ -2,7 +2,7 @@ package logic.engine.validation;
 
 import logic.machine.Machine;
 import logic.machine.components.Rotor;
-
+import logic.exceptions.EnigmaException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,23 +31,27 @@ public class EnigmaCodeValidator {
     private void validateRotorCount(List<Integer> rotorIDs) {
         // Check exactly 3 Rotors
         if (rotorIDs.size() != REQUIRED_ROTOR_COUNT) {
-            throw new IllegalArgumentException(String.format(
-                    "Invalid rotor count. Require exactly %d selected rotors, but got: %d",
-                    REQUIRED_ROTOR_COUNT, rotorIDs.size()));
+            throw new EnigmaException(
+                    EnigmaException.ErrorCode.
+                            USER_INVALID_ROTOR_COUNT,REQUIRED_ROTOR_COUNT,
+                            rotorIDs.size());
         }
     }
 
     private void validateRotorIDs(List<Integer> rotorIDs) {
         // Check uniqueness
         if (new HashSet<>(rotorIDs).size() != rotorIDs.size()) {
-            throw new IllegalArgumentException("Rotor IDs must be unique. Duplicates found in: " + rotorIDs);
+            throw new EnigmaException(EnigmaException.ErrorCode.USER_DUPLICATE_ROTOR_IDS);
+
         }
 
         // Check existence in machine
         Map<Integer, Rotor> availableRotors = machine.getAllAvailableRotors();
         for (int id : rotorIDs) {
             if (!availableRotors.containsKey(id)) {
-                throw new IllegalArgumentException("Rotor ID " + id + " does not exist in the machine. Available IDs: " + availableRotors.keySet());
+                throw new EnigmaException(EnigmaException.ErrorCode.
+                        USER_ROTOR_NOT_FOUND
+                        ,id,availableRotors.keySet());
             }
         }
     }
@@ -55,17 +59,18 @@ public class EnigmaCodeValidator {
     private void validatePositions(String positionsString, int expectedSize) {
         // Check length
         if (positionsString.length() != expectedSize) {
-            throw new IllegalArgumentException(
-                    "Rotor count (" + expectedSize + ") must match the number of starting positions (" + positionsString.length() + ")."
-            );
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                    USER_POSITION_COUNT_MISMATCH
+                    ,expectedSize,positionsString.length());
         }
     }
 
     private void validateCharacter(String positionsString, String alphabet) {
         for (char c : positionsString.toUpperCase().toCharArray()) {
             if (alphabet.indexOf(c) == -1) {
-                // Improved error message
-                throw new IllegalArgumentException("Character '" + c + "' is not part of the machine's keyboard.");
+                throw new EnigmaException(EnigmaException.ErrorCode.
+                        USER_INVALID_POSITION_CHAR
+                        ,c);
             }
         }
     }

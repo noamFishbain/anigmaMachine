@@ -13,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
+import logic.exceptions.EnigmaException;
 
 /** Validates and loads the Enigma Machine configuration from an XML file.*/
 public class XmlMachineConfigLoader implements MachineConfigLoader {
@@ -23,9 +24,13 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
         // Validation: Check if file exists and has .xml extension
         File file = new File(filePath);
         if (!file.exists())
-            throw new Exception("File not found: " + filePath);
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                    FILE_NOT_FOUND,
+                    filePath);
         if (!filePath.endsWith(".xml"))
-            throw new Exception("File must be an XML file.");
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                    FILE_NOT_XML_TYPE,
+                    filePath);
 
         // JAXB Unmarshalling: Convert XML file to auto-generated Java objects
         BTEEnigma bteEnigma = deserializeFromXML(new FileInputStream(file));
@@ -57,7 +62,7 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
     // Validation: alphabet length
     private void validateABC(String abc) throws Exception {
         if (abc.length() % 2 != 0) {
-            throw new Exception("ABC size must be even. Current size: " + abc.length());
+            throw new EnigmaException(EnigmaException.ErrorCode.XML_ABC_ODD_LENGTH, abc.length());
         }
     }
 
@@ -67,21 +72,23 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
 
         // Check if there are enough rotors defined (Minimum 3 expected)
         if (rotors.size() < 3) {
-            throw new Exception("Not enough rotors defined. Machine must define at least 3 rotors.");
+            throw new EnigmaException(EnigmaException.ErrorCode.XML_ROTOR_COUNT_LOW,3);
         }
 
         // Check sequential IDs (1, 2, 3...)
         List<Integer> ids = rotors.stream().map(BTERotor::getId).sorted().collect(Collectors.toList());
         for (int i = 0; i < ids.size(); i++) {
             if (ids.get(i) != (i + 1)) {
-                throw new Exception("Rotor IDs must be unique and sequential (1 to N).");
+                throw new EnigmaException(EnigmaException.ErrorCode.XML_ROTOR_ID_SEQUENCE);
             }
         }
 
         // Check mapping size matches ABC and logical validity (no duplicates)
         for (BTERotor rotor : rotors) {
             if (rotor.getBTEPositioning().size() != expectedMappingSize) {
-                throw new Exception("Rotor ID " + rotor.getId() + " positioning count does not match ABC size.");
+                throw new EnigmaException(EnigmaException.ErrorCode.
+                        XML_ROTOR_MAPPING_SIZE,
+                        rotor.getId());
             }
 
             // Validate mapping logic (Duplicate keys in Right/Left)
@@ -100,20 +107,26 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
 
             // 1. Check if characters are valid (exist in ABC)
             if (abc.indexOf(right) == -1 || abc.indexOf(left) == -1) {
-                throw new Exception("Rotor " + rotor.getId() + " contains invalid characters not in ABC: " + right + ", " + left);
+                throw new EnigmaException(EnigmaException.ErrorCode.
+                        XML_ROTOR_INVALID_CHARS
+                        ,right,left);
             }
 
             // 2. Check for duplicates in the RIGHT column (Source)
             // If "A" appears twice in 'right', it means 'A' maps to two different things -> Invalid.
             if (rightSideChars.contains(right)) {
-                throw new Exception("Rotor " + rotor.getId() + " maps source char '" + right + "' more than once (Duplicate Mapping)!");
+                throw new EnigmaException(EnigmaException.ErrorCode.
+                        XML_ROTOR_DUPLICATE_RIGHT
+                        ,rotor.getId(),right);
             }
             rightSideChars.add(right);
 
             // 3. Check for duplicates in the LEFT column (Target)
             // In Enigma, rotors must be bijective (1-to-1), so duplicates here are also invalid.
             if (leftSideChars.contains(left)) {
-                throw new Exception("Rotor " + rotor.getId() + " maps to target char '" + left + "' more than once!");
+                throw new EnigmaException(EnigmaException.ErrorCode.
+                        XML_ROTOR_DUPLICATE_LEFT,
+                        rotor.getId(),left);
             }
             leftSideChars.add(left);
         }
@@ -129,7 +142,7 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
 
         for (int i = 0; i < ids.size(); i++) {
             if (ids.get(i) != (i + 1)) {
-                throw new Exception("Reflector IDs must be unique and sequential (I to N).");
+                throw new EnigmaException(EnigmaException.ErrorCode.XML_REFLECTOR_ID_SEQUENCE);
             }
         }
     }
@@ -222,9 +235,7 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
             case "III": return 3;
             case "IV": return 4;
             case "V": return 5;
-            default: throw new IllegalArgumentException("Unknown reflector ID: " + roman);
+            default: throw new EnigmaException(EnigmaException.ErrorCode.XML_REFLECTOR_UNKNOWN_ID,roman);
         }
     }
-
-    // ... (Your existing commented-out tests remain here)
 }

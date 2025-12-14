@@ -67,6 +67,7 @@ public class ConsoleApp {
                         System.out.println("Exiting application. Goodbye!");
                         break;
                     default:
+
                         System.out.println("Invalid option. Please choose 1-10.");
                 }
             } catch (Exception e) {

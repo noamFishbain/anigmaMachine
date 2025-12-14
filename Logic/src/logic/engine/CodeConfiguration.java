@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.io.Serializable;
+import logic.exceptions.EnigmaException;
 
 /** Represents a single code configuration of the Enigma machine.*/
 public class CodeConfiguration implements Serializable {
@@ -25,15 +26,15 @@ public class CodeConfiguration implements Serializable {
     private void validateInputs(List<Integer> rotorIds, List<Character> positions, String refId) {
         // Basic null checks
         if (rotorIds == null || positions == null || refId == null) {
-            throw new IllegalArgumentException("Code configuration arguments cannot be null.");
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                    CONFIG_ARGS_NULL);
         }
 
         // Size must match: each rotor ID must have a position
         if (rotorIds.size() != positions.size()) {
-            throw new IllegalArgumentException(String.format(
-                    "Size mismatch: %d rotors vs %d positions. They must be equal.",
-                    rotorIds.size(), positions.size()
-            ));
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                    USER_POSITION_COUNT_MISMATCH,
+                    rotorIds.size(),positions.size());
         }
     }
 

@@ -2,6 +2,7 @@ package logic.engine.utils;
 
 import logic.machine.components.Keyboard;
 import logic.machine.components.Rotor;
+import logic.exceptions.EnigmaException;
 
 import java.util.List;
 import java.util.Map;
@@ -60,7 +61,7 @@ public class CodeFormatter implements  Serializable {
         Rotor rotor = allAvailableRotors.get(rotorId);
         if (rotor == null) {
             // Should not happen if validation passed, but defensive programming is good.
-            throw new IllegalArgumentException("Rotor ID " + rotorId + " not found.");
+            throw new EnigmaException(EnigmaException.ErrorCode.USER_ROTOR_NOT_FOUND, rotorId);
         }
 
         int notchIndex = rotor.getNotch();

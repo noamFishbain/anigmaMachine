@@ -1,5 +1,6 @@
 package logic.machine.components;
 import java.io.Serializable;
+import logic.exceptions.EnigmaException;
 /**
  * Represents a single Enigma rotor.
  * Updated to use a Position-Based Mapping (Lookup Table) instead of simple index arrays.
@@ -21,7 +22,7 @@ public class RotorImpl implements Rotor , Serializable {
     // Constructor updated to accept int[][] mapping
     public RotorImpl(int id, int[][] letterPositions, int notchPosition, int initialPosition) {
         if (letterPositions == null || letterPositions.length == 0) {
-            throw new IllegalArgumentException("Rotor mapping cannot be null or empty");
+            throw new EnigmaException(EnigmaException.ErrorCode.ROTOR_MAPPING_MISSING);
         }
 
         // Keep our own defensive copies
@@ -37,27 +38,25 @@ public class RotorImpl implements Rotor , Serializable {
 
     private void validateInitialInput(int[] forwardMapping) {
         if (forwardMapping == null || forwardMapping.length == 0) {
-            throw new IllegalArgumentException("Rotor mapping cannot be null or empty");
+            throw new EnigmaException(EnigmaException.ErrorCode.ROTOR_MAPPING_MISSING);
         }
     }
 
     // Validate notch position
     private int validateAndSetNotch(int notchPosition, int size) {
         if (notchPosition < 0 || notchPosition >= size) {
-            throw new IllegalArgumentException(
-                    "Notch position out of range: " + notchPosition +
-                            " (valid: 0.." + (size - 1) + ")"
-            );
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                    ROTOR_NOTCH_OUT_OF_RANGE,
+                    notchPosition,size-1);
         }
         return notchPosition;
     }
 
     private  int validateAndSetPosition(int position, int size) {
         if (position < 0 || position >= size) {
-            throw new IllegalArgumentException(
-                    "Initial position out of range: " + position +
-                            " (valid: 0.." + (size - 1) + ")"
-            );
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                    ROTOR_POSITION_OUT_OF_RANGE,
+                    position,size-1);
         }
         return position;
     }
@@ -91,7 +90,9 @@ public class RotorImpl implements Rotor , Serializable {
         }
 
         if (outputLeftIndex == -1) {
-            throw new RuntimeException("Mapping error: Connection not found in Rotor " + id);
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                    ROTOR_BROKEN_MAPPING,
+                    id);
         }
 
         // 3. Calculate relative output index (Exit position - Offset)
@@ -117,7 +118,9 @@ public class RotorImpl implements Rotor , Serializable {
         }
 
         if (outputRightIndex == -1) {
-            throw new RuntimeException("Mapping error: Connection not found in Rotor " + id);
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                    ROTOR_BROKEN_MAPPING,
+                    id);
         }
 
         // 3. Calculate relative output index (Exit position - Offset)
@@ -144,7 +147,9 @@ public class RotorImpl implements Rotor , Serializable {
     @Override
     public void setPosition(int newPosition) {
         if (newPosition < 0 || newPosition >= keyboardSize) {
-            throw new IllegalArgumentException("Position out of range: " + newPosition);
+            throw new EnigmaException(EnigmaException.ErrorCode.
+                    ROTOR_POSITION_OUT_OF_RANGE,
+                    newPosition,keyboardSize-1);
         }
 
             // Check column 0 (Right Position)
