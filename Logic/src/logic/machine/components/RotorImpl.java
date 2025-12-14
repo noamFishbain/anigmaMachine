@@ -24,41 +24,50 @@ public class RotorImpl implements Rotor {
             throw new IllegalArgumentException("Rotor mapping cannot be null or empty");
         }
 
+        // Keep our own defensive copies
         this.id = id;
         this.keyboardSize = letterPositions.length;
 
         // Save the mapping table directly
         this.letterPositions = letterPositions;
 
-        // Validate notch position
-        if (notchPosition < 0 || notchPosition >= keyboardSize) {
+        this.notchPosition = validateAndSetNotch(notchPosition, keyboardSize);
+        this.position = validateAndSetPosition(initialPosition, keyboardSize);
+    }
+
+    private void validateInitialInput(int[] forwardMapping) {
+        if (forwardMapping == null || forwardMapping.length == 0) {
+            throw new IllegalArgumentException("Rotor mapping cannot be null or empty");
+        }
+    }
+
+    // Validate notch position
+    private int validateAndSetNotch(int notchPosition, int size) {
+        if (notchPosition < 0 || notchPosition >= size) {
             throw new IllegalArgumentException(
                     "Notch position out of range: " + notchPosition +
-                            " (valid: 0.." + (keyboardSize - 1) + ")"
+                            " (valid: 0.." + (size - 1) + ")"
             );
         }
-        this.notchPosition = notchPosition;
+        return notchPosition;
+    }
 
         // Validate initial position
         if (initialPosition < 0 || initialPosition >= keyboardSize) {
             throw new IllegalArgumentException(
                     "Initial position out of range: " + initialPosition +
-                            " (valid: 0.." + (keyboardSize - 1) + ")"
+                            " (valid: 0.." + (size - 1) + ")"
             );
         }
-        this.position = initialPosition;
+        return initialPosition;
     }
 
     // Advances the rotor by one position
     @Override
     public boolean step() {
-
-
         position = (position + 1) % keyboardSize;
 
-        boolean atNotchBeforeStep = (this.position == this.notchPosition);
-
-        return atNotchBeforeStep;
+        return (this.position == this.notchPosition);
     }
 
     // Maps an input index through the rotor in the forward direction (Right -> Left)
@@ -126,7 +135,7 @@ public class RotorImpl implements Rotor {
     }
 
     @Override
-    public int getAlphabetSize() {
+    public int getKeyboardSize() {
         return keyboardSize;
     }
 

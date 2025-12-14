@@ -4,7 +4,7 @@ import logic.loader.dto.MachineDescriptor;
 import logic.loader.dto.ReflectorDescriptor;
 import logic.loader.dto.RotorDescriptor;
 import logic.machine.components.*;
-
+import logic.engine.utils.CodeFormatter;
 import java.util.*;
 
 public class MachineImpl implements Machine {
@@ -16,6 +16,7 @@ public class MachineImpl implements Machine {
     private Map<Integer, Rotor> allAvailableRotors;
     private Map<String, Reflector> allAvailableReflectors;
     private boolean debugMode = true; // Default to true for logs
+    private CodeFormatter formatter;
 
     // Main constructor from XML Descriptor
     public MachineImpl(MachineDescriptor descriptor) {
@@ -25,6 +26,7 @@ public class MachineImpl implements Machine {
         this.allAvailableReflectors = new HashMap<>();
         this.activeRotors = new ArrayList<>();
         this.activeReflector = null;
+        this.formatter = new CodeFormatter(this.allAvailableRotors, this.keyboard);
 
         // Load Rotors
         loadRotors(descriptor.getRotors());
@@ -206,41 +208,7 @@ public class MachineImpl implements Machine {
 
     // Helper needed for specs
     public String formatConfiguration(List<Integer> rotorIDs, List<Character> positions, String reflectorID) {
-        if (rotorIDs.size() != positions.size())
-            return "";
-        StringBuilder sb = new StringBuilder();
-
-        // IDs: <ID, ID, ID> (Print Left to Right)
-        sb.append("<");
-        for( int i = 0; i < rotorIDs.size(); i++) {
-            sb.append(rotorIDs.get(i));
-            if(i != rotorIDs.size() - 1) sb.append(", ");
-        }
-        sb.append(">");
-
-        // Positions: <Pos(Dist), Pos(Dist)> (Print Left to Right)
-        sb.append("<");
-        for (int i = 0 ; i < rotorIDs.size();  i++) {
-            int id = rotorIDs.get(i);
-            char pos = positions.get(i);
-            int dist = calculateDistanceFromNotch(id, pos);
-            sb.append(pos).append("(").append(dist).append(")");
-            if (i < rotorIDs.size())
-                sb.append(",");
-        }
-        sb.append(">");
-
-        // Format: <ReflectorID>
-        sb.append("<").append(reflectorID).append(">");
-        return sb.toString();
-    }
-
-    // Helper to calculate distance from notch for display
-    private int calculateDistanceFromNotch(int rotorId, char currentPosChar) {
-        int notchIndex = allAvailableRotors.get(rotorId).getNotch();
-        int currentIndex = keyboard.toIndex(currentPosChar);
-        int size = keyboard.size();
-        return (notchIndex - currentIndex + size) % size;
+        return formatter.formatConfiguration(rotorIDs, positions, reflectorID);
     }
 
     @Override
