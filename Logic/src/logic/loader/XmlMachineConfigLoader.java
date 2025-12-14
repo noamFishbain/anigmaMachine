@@ -127,7 +127,7 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
         return new MachineImpl(descriptor);
     }
 
-    // Helper method to parse BTE rotors into RotorDescriptor objects. Calculates the forward mapping array based on the right to left character mapping.
+    // Helper method to parse BTE rotors into RotorDescriptor objects.
     private List<RotorDescriptor> getRotorDescriptors(BTEEnigma bteEnigma, String abc) {
         List<RotorDescriptor> result = new ArrayList<>();
         for (BTERotor bteRotor : bteEnigma.getBTERotors().getBTERotor()) {
@@ -138,26 +138,34 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
 
     private RotorDescriptor createSingleRotorDescriptor(BTERotor bteRotor, String abc) {
         int id = bteRotor.getId();
-        int notch = bteRotor.getNotch();
-        List<Integer> mapping = calculateForwardMapping(bteRotor.getBTEPositioning(), abc);
+        int notch = bteRotor.getNotch() ;
+
+        // CHANGED: Use the new calculation method for [ABC][2] array
+        int[][] mapping = calculateLocationMapping(bteRotor.getBTEPositioning(), abc);
+
+        // Note: Assuming RotorDescriptor constructor now accepts int[][] mapping
         return new RotorDescriptor(id, mapping, notch);
     }
 
-    private List<Integer> calculateForwardMapping(List<BTEPositioning> positions, String abc) {
-        List<Integer> mapping = new ArrayList<>(Collections.nCopies(abc.length(), 0));
+    // New Method: Creates a normalized table where each cell represents a character from ABC
+    // Cell [i][0] holds the row index where char 'i' appears in the RIGHT column
+    // Cell [i][1] holds the row index where char 'i' appears in the LEFT column
+    private int[][] calculateLocationMapping(List<BTEPositioning> positions, String abc) {
+        int length = abc.length();
+        int[][] mapping = new int[length][2];
 
-        for (int i = 0; i < positions.size(); i++) { // (ABC size)
+        for (int i = 0; i < positions.size(); i++) {
             BTEPositioning pos = positions.get(i);
 
-            // right char in XML is the input pin (implicit index i)
-            // left char in XML is the output pin
+            char rightChar = pos.getRight().charAt(0);
             char leftChar = pos.getLeft().charAt(0);
 
-            // Find the index of the left char in the alphabet
-            int charIndexInAbc = abc.indexOf(leftChar);
+            int rightIndex = abc.indexOf(rightChar);
+            int leftIndex = abc.indexOf(leftChar);
 
-            // This means: If 'A' is at row i, pin 'i' maps to pin 'Index of A'
-            mapping.set(charIndexInAbc, i); // Set at the correct index
+            // Store the row index 'i' in the corresponding character's cell
+            mapping[rightIndex][0] = i; // Right column position for this char
+            mapping[leftIndex][1] = i;  // Left column position for this char
         }
         return mapping;
     }
