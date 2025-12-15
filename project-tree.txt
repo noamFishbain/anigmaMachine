@@ -1,0 +1,97 @@
+anigmaMachine/
+├── .gitignore
+├── .idea/
+│   ├── .gitignore
+│   ├── .name
+│   ├── artifacts/
+│   │   ├── EnigmaConsole.xml
+│   │   └── EnigmaLogic.xml
+│   ├── compiler.xml
+│   ├── libraries/
+│   │   ├── angus_activation.xml
+│   │   └── download.xml
+│   ├── misc.xml
+│   ├── modules.xml
+│   └── vcs.xml
+├── ConsoleUI/
+│   ├── ConsoleUI.iml
+│   └── src/
+│       ├── META-INF/
+│       │   └── MANIFEST.MF
+│       └── ui/
+│           ├── ConsoleApp.java
+│           ├── ConsoleInputCollector.java
+│           ├── ConsoleInputReader.java
+│           ├── ConsoleMenu.java
+│           └── Main.java
+├── EnigmaMachine.iml
+├── lib/
+│   ├── angus-activation.jar
+│   ├── jackson-datatype-jdk8.jar
+│   ├── jackson-datatype-jsr310.jar
+│   ├── jakarta.activation-api.jar
+│   ├── jakarta.xml.bind-api.jar
+│   ├── jaxb-core.jar
+│   ├── jaxb-impl.jar
+│   ├── jaxb-jxc.jar
+│   ├── jaxb-xjc.jar
+│   └── ReflectionTester.jar
+├── Logic/
+│   ├── Logic.iml
+│   ├── resources/
+│   │   ├── Enigma-Ex1.xsd
+│   │   ├── ex1-error-3.xml
+│   │   ├── ex1-error-5.xml
+│   │   ├── ex1-error-8.xml
+│   │   ├── ex1-sanity-paper-enigma.xml
+│   │   └── ex1-sanity-small.xml
+│   └── src/
+│       ├── jaxb/
+│       │   └── schema/
+│       │       └── generated/
+│       │           ├── BTEEnigma.java
+│       │           ├── BTEPositioning.java
+│       │           ├── BTEReflect.java
+│       │           ├── BTEReflector.java
+│       │           ├── BTEReflectors.java
+│       │           ├── BTERotor.java
+│       │           ├── BTERotors.java
+│       │           └── ObjectFactory.java
+│       └── logic/
+│           ├── engine/
+│           │   ├── CodeConfiguration.java
+│           │   ├── EnigmaEngine.java
+│           │   ├── EnigmaEngineImpl.java
+│           │   ├── MachineSpecs.java
+│           │   ├── utils/
+│           │   │   ├── CodeFormatter.java
+│           │   │   └── InputParser.java
+│           │   └── validation/
+│           │       └── EnigmaCodeValidator.java
+│           ├── exceptions/
+│           │   └── EnigmaException.java
+│           ├── loader/
+│           │   ├── dto/
+│           │   │   ├── converters/
+│           │   │   │   └── XmlDtoConverter.java
+│           │   │   ├── MachineDescriptor.java
+│           │   │   ├── MachineHistoryRecord.java
+│           │   │   ├── ReflectorDescriptor.java
+│           │   │   └── RotorDescriptor.java
+│           │   ├── MachineConfigLoader.java
+│           │   ├── validation/
+│           │   │   └── XmlValidationRules.java
+│           │   └── XmlMachineConfigLoader.java
+│           └── machine/
+│               ├── components/
+│               │   ├── Keyboard.java
+│               │   ├── KeyboardImpl.java
+│               │   ├── Reflector.java
+│               │   ├── ReflectorImpl.java
+│               │   ├── Rotor.java
+│               │   └── RotorImpl.java
+│               ├── Machine.java
+│               └── MachineImpl.java
+└── Submission/
+    ├── run.bat
+    └── run.sh
