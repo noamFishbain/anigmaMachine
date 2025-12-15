@@ -11,14 +11,14 @@ import java.io.Serializable;
 
 public class MachineImpl implements Machine, Serializable {
 
-    private int processedMessages = 0;
-    private Keyboard keyboard;
-    private List<Rotor> activeRotors; // List storing rotors. Index 0 = Rightmost (Fastest), Last Index = Leftmost (Slowest)
+    private int processedMessages;
+    private final Keyboard keyboard;
+    private final List<Rotor> activeRotors; // List storing rotors. Index 0 = Rightmost (Fastest), Last Index = Leftmost (Slowest)
     private Reflector activeReflector;
-    private Map<Integer, Rotor> allAvailableRotors;
-    private Map<String, Reflector> allAvailableReflectors;
+    private final Map<Integer, Rotor> allAvailableRotors;
+    private final Map<String, Reflector> allAvailableReflectors;
     private boolean debugMode = false; // Default to true for logs
-    private CodeFormatter formatter;
+    private final CodeFormatter formatter;
 
     // Main constructor from XML Descriptor
     public MachineImpl(MachineDescriptor descriptor) {
@@ -126,9 +126,9 @@ public class MachineImpl implements Machine, Serializable {
             return;
 
         boolean carry = true;
-        for (int i = 0; i < activeRotors.size(); i++) {
+        for (Rotor activeRotor : activeRotors) {
             if (carry) {
-                carry = activeRotors.get(i).step();
+                carry = activeRotor.step();
             } else {
                 break;
             }

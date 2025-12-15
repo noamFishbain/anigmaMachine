@@ -5,7 +5,6 @@ import logic.loader.MachineConfigLoader;
 import logic.loader.XmlMachineConfigLoader;
 import logic.loader.dto.MachineHistoryRecord;
 import logic.machine.Machine;
-import logic.machine.components.Rotor;
 import logic.engine.utils.InputParser;
 import logic.engine.validation.EnigmaCodeValidator;
 
@@ -24,6 +23,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     private final List<MachineHistoryRecord> historyList = new ArrayList<>();
     private transient InputParser parser;
     private transient EnigmaCodeValidator validator;
+    private static final int REQUIRED_ROTOR_COUNT_HARDCODED = 3;
 
     public EnigmaEngineImpl() {
 
@@ -49,33 +49,46 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         // Check if machine is loaded
         ensureMachineLoaded();
 
-        // Parsing and Basic Validation
+        // Parse and Validate all inputs against machine rules
+        CodeConfiguration initialConfig = parseAndValidateManualInput(rotorIDsString, positionsString, reflectorNum);
+
+        // Physically configure the machine and update engine state
+        updateEngineConfiguration(initialConfig.getRotorIdsInOrder(), initialConfig.getRotorPositions(), initialConfig.getReflectorId());
+
+        // Return the formatted current code for UI display
+        return formatCode(this.currentCode);
+    }
+
+    // Parses the raw strings, converts reflector ID, validates all rules, and returns a CodeConfiguration DTO.
+    private CodeConfiguration parseAndValidateManualInput(String rotorIDsString, String positionsString, int reflectorNum) throws Exception {
+
+        // Parsing and Basic Conversion
         List<Integer> rotorIDs = parser.parseRotorIDs(rotorIDsString);
         String reflectorID = parser.convertIntToRoman(reflectorNum);
         String alphabet = machine.getKeyboard().asString();
 
-        // Validate
+        // Validate against internal Engine/Machine rules (Delegated to Validator)
         validator.validateAllManualCode(rotorIDs, positionsString, alphabet);
 
-        // Position characters must be in the machine's keyboard
+        // Prepare the position list for configuration
+        // Position characters must be in the machine's keyboard and converted to a list
         List<Character> positionsList = positionsString.toUpperCase().chars()
                 .mapToObj(c -> (char) c)
                 .collect(Collectors.toList());
 
-
-        // Physically configure the machine
-        updateEngineConfiguration(rotorIDs, positionsList, reflectorID);
-
-        return formatCode(this.currentCode);
+        // Create and return the configuration object (CodeConfiguration also validates size match)
+        return new CodeConfiguration(rotorIDs, positionsList, reflectorID);
     }
 
     @Override
     public void setAutomaticCode() {
+        final int count = REQUIRED_ROTOR_COUNT_HARDCODED;
+
         // Check if machine is loaded
         ensureMachineLoaded();
 
-        List<Integer> selectedRotorIDs = selectRandomRotors(3);
-        List<Character> selectedPositions = selectRandomPositions(3);
+        List<Integer> selectedRotorIDs = selectRandomRotors(count);
+        List<Character> selectedPositions = selectRandomPositions(count);
         String selectedReflectorID = selectRandomReflector();
 
         updateEngineConfiguration(selectedRotorIDs, selectedPositions, selectedReflectorID);
@@ -102,39 +115,54 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     // Processes the given text using the Enigma machine
     @Override
     public String process(String text) {
+        // Pre-process checks (Machine loaded, code set, input characters valid)
+        String cleanedText = performPreProcessChecks(text);
+
+        // Delegate the actual processing and time measurement
+        String startConfigStr = formatCode(currentCode);
+
+        // Measure time and process text
+        long start = System.nanoTime();
+        String output = machine.process(cleanedText);
+        long end = System.nanoTime();
+        long duration = end - start;
+
+        // Update the engine state and save the record to history
+        updateStateAndHistory(cleanedText, output, duration, startConfigStr);
+
+        return output;
+    }
+
+    // Performs all necessary validation checks before starting the processing
+    // Returns the input text ready for processing (trimmed and clean)
+    private String performPreProcessChecks(String text) {
         // Check if machine is loaded
         ensureMachineLoaded();
 
         if (originalCode == null) { // cannot do P5 before P3 or P4
             throw new EnigmaException(EnigmaException.ErrorCode.CONFIG_NOT_SET);
         }
+
         // Trim whitespaces (Remove leading/trailing spaces)
         String cleanedText = text.trim();
+
         // Validate characters against the Alphabet
-        // We convert to UpperCase because the machine is case-insensitive, but the keyboard stores Uppercase.
         validateInputCharacters(cleanedText);
-        // Capture the configuration BEFORE processing (for history)
-        String currentConfigStr = formatCode(currentCode);
 
-        // Start timer
-        long start = System.nanoTime();
+        return cleanedText;
+    }
 
-        // Process the text (Delegate to machine)
-        String output = machine.process(text);
-
-        // Stop timer
-        long end = System.nanoTime();
-
+    // Updates the current code state (rotor positions) and saves the action to the history log
+    private void updateStateAndHistory(String input, String output, long duration, String startConfigStr) {
         // Update the current code state (Rotor positions changed)
         List<Character> newPositions = machine.getCurrentRotorPositions();
         if (currentCode != null) {
-            this.currentCode = this.currentCode.withRotorPositions(newPositions);;
+            // Creates a new CodeConfiguration instance with the new positions (immutability)
+            this.currentCode = this.currentCode.withRotorPositions(newPositions);
         }
 
         // Save to history
-        long duration = end - start;
-        historyList.add(new MachineHistoryRecord(text, output, duration, currentConfigStr));
-        return output;
+        historyList.add(new MachineHistoryRecord(input, output, duration, startConfigStr));
     }
 
     // Resets the machine to its original configuration
@@ -164,6 +192,11 @@ public class EnigmaEngineImpl implements EnigmaEngine {
             machine.setDebugMode(debugMode);
             System.out.println("Debug mode set to: " + debugMode);
         }
+    }
+
+    @Override
+    public int getRequiredRotorCount(){
+        return REQUIRED_ROTOR_COUNT_HARDCODED;
     }
 
     @Override
@@ -219,16 +252,21 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         Random random = new Random();
         return availableReflectors.get(random.nextInt(availableReflectors.size()));
     }
-    // ------------------- Bonus: Save & Load Game -------------------
 
     @Override
     public void saveGame(String pathWithoutExtension) throws IOException {
-        // 1. Add binary extension to the file path
+        // Add binary extension to the file path
         String fullPath = pathWithoutExtension + ".dat";
 
-        // 2. Open file for writing (Serialization)
+        // Delegate the actual serialization process
+        performSerialization(fullPath);
+    }
+
+    // Performs the actual writing of the state objects to the file stream.
+    private void performSerialization(String fullPath) throws IOException {
+        // Open file for writing (Serialization)
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fullPath))) {
-            // 3. Serialize critical objects in order
+            // Serialize critical objects in order
             out.writeObject(this.machine);
             out.writeObject(this.historyList);
             out.writeObject(this.originalCode);
@@ -243,12 +281,21 @@ public class EnigmaEngineImpl implements EnigmaEngine {
 
     @Override
     public void loadGame(String pathWithoutExtension) throws IOException, ClassNotFoundException {
-        // 1. Add binary extension to the file path
+        // Add binary extension to the file path
         String fullPath = pathWithoutExtension + ".dat";
 
-        // 2. Open file for reading (Deserialization)
+        // Perform the actual deserialization and update fields
+        performDeserialization(fullPath);
+
+        // Restore transient components
+        restoreTransientComponents();
+    }
+
+    // Performs the actual reading of the state objects from the file stream and updates the engine fields
+    private void performDeserialization(String fullPath) throws IOException, ClassNotFoundException {
+        // Open file for reading (Deserialization)
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fullPath))) {
-            // 3. Deserialize objects in the EXACT same order they were written
+            // Deserialize objects in the EXACT same order they were written
             this.machine = (Machine) in.readObject();
 
             // Handle History List (since it is final, we cannot re-assign it)
@@ -258,18 +305,21 @@ public class EnigmaEngineImpl implements EnigmaEngine {
 
             this.originalCode = (CodeConfiguration) in.readObject();
             this.currentCode = (CodeConfiguration) in.readObject();
-
-            // 4. Re-initialize transient fields (Component restoration)
-
-            // Re-create the validator with the newly loaded machine instance
-            this.validator = new EnigmaCodeValidator(this.machine);
-
-            // Re-create the parser if needed (stateless component)
-            if (this.parser == null) {
-                this.parser = new InputParser();
-            }
         }
     }
+
+    // Re-initializes non-serialized (transient) utility fields after loading
+    private void restoreTransientComponents() {
+        // Re-create the validator with the newly loaded machine instance
+        this.validator = new EnigmaCodeValidator(this.machine);
+
+        // Re-create the parser if needed (stateless component)
+        if (this.parser == null) {
+            // Assuming InputParser is stateless and can be recreated easily
+            this.parser = new InputParser();
+        }
+    }
+
     // Helper method to check if all characters exist in the alphabet
     private void validateInputCharacters(String text) {
         // We iterate over the input (converted to UpperCase to match the keyboard)

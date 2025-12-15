@@ -15,6 +15,7 @@ public class ConsoleApp {
     private final Scanner scanner;
     private final ConsoleInputCollector inputCollector;
 
+    // Initializes the ConsoleApp with a new instance of the EnigmaEngine and input tool
     public ConsoleApp() {
         this.engine = new EnigmaEngineImpl();
         this.scanner = new Scanner(System.in);
@@ -54,14 +55,12 @@ public class ConsoleApp {
                     case 7:
                         handleHistory();
                         break;
-                    // --- NEW CASES ---
                     case 8:
                         handleSaveGame();
                         break;
                     case 9:
                         handleLoadGame();
                         break;
-                    // -----------------
                     case 10:
                         exit = true;
                         System.out.println("Exiting application. Goodbye!");
@@ -80,8 +79,7 @@ public class ConsoleApp {
         scanner.close();
     }
 
-    // --- Existing Methods (1-7) ---
-
+    // Command 1: Loads the machine configuration from an XML file
     private void handleLoadXml() {
         System.out.print("Enter full path to XML file: ");
         String path = ConsoleInputReader.readLine(scanner).trim();
@@ -96,6 +94,7 @@ public class ConsoleApp {
         }
     }
 
+    // Command 2: Displays the current machine specifications and state
     private void handleShowMachineSpecs() {
         try {
             MachineSpecs specs = engine.getMachineSpecs();
@@ -120,6 +119,7 @@ public class ConsoleApp {
         }
     }
 
+    // Command 3: Collects rotor IDs, positions, and reflector ID from the user
     private void handleManualCode() {
         try {
             String rotorIDs = inputCollector.readValidRotorIDs();
@@ -141,6 +141,7 @@ public class ConsoleApp {
         }
     }
 
+    // Command 4: Requests the engine to generate and set a random configuration
     private void handleAutomaticCode() {
         try {
             engine.setAutomaticCode();
@@ -152,6 +153,7 @@ public class ConsoleApp {
         }
     }
 
+    // Command 5: Reads text from the user and sends it for encryption/decryption
     private void handleProcessText() {
         // Validation: Check if machine is ready
         if (!isMachineReadyForOperation()) {
@@ -172,6 +174,7 @@ public class ConsoleApp {
         }
     }
 
+    // Command 6: Resets the machine to its original configured code
     private void handleReset() {
         try {
             engine.reset();
@@ -181,6 +184,7 @@ public class ConsoleApp {
         }
     }
 
+    // Command 7: Displays the history of all processed messages and configurations
     private void handleHistory() {
         List<MachineHistoryRecord> history = engine.getHistory();
         if (history.isEmpty()) {
@@ -196,8 +200,6 @@ public class ConsoleApp {
             System.out.println("---------------------------");
         }
     }
-
-    // --- New Bonus Methods (8-9) ---
 
     // Command 8: Saves the current machine state to a file
     private void handleSaveGame() {
@@ -235,9 +237,10 @@ public class ConsoleApp {
             System.out.println(e.getMessage());
         }
     }
+
     // Helper method to validate machine state before processing
     private boolean isMachineReadyForOperation() {
-        // 1. Check if the machine is loaded (XML file loaded)
+        // Check if the machine is loaded (XML file loaded)
         try {
             MachineSpecs specs = engine.getMachineSpecs();
             if (specs.getTotalRotors() == 0) {
@@ -250,7 +253,7 @@ public class ConsoleApp {
             return false;
         }
 
-        // 2. Check if the code configuration is set (Rotors, Positions, Reflector selected)
+        // Check if the code configuration is set (Rotors, Positions, Reflector selected)
         if (!engine.isCodeConfigurationSet()) {
             System.out.println("Error: Machine configuration has not been set.");
             System.out.println("Please set the code manually (Option 3) or automatically (Option 4).");
