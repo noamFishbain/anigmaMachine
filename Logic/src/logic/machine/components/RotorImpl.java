@@ -36,12 +36,6 @@ public class RotorImpl implements Rotor , Serializable {
         this.position = validateAndSetPosition(initialPosition, keyboardSize);
     }
 
-    private void validateInitialInput(int[] forwardMapping) {
-        if (forwardMapping == null || forwardMapping.length == 0) {
-            throw new EnigmaException(EnigmaException.ErrorCode.ROTOR_MAPPING_MISSING);
-        }
-    }
-
     // Validate notch position
     private int validateAndSetNotch(int notchPosition, int size) {
         if (notchPosition < 0 || notchPosition >= size) {
@@ -61,8 +55,6 @@ public class RotorImpl implements Rotor , Serializable {
         return position;
     }
 
-
-
     // Advances the rotor by one position
     @Override
     public boolean step() {
@@ -71,13 +63,13 @@ public class RotorImpl implements Rotor , Serializable {
         return (this.position == this.notchPosition);
     }
 
-    // Maps an input index through the rotor in the forward direction (Right -> Left)
+    // Maps an input index through the rotor in the forward direction (Right to Left)
     @Override
     public int mapForward(int inputIndex) {
-        // 1. Calculate physical contact point on the Right side
+        // Calculate physical contact point on the Right side
         int contactIndex = (inputIndex + position) % keyboardSize;
 
-        // 2. Lookup: Find which character connects to this Right contact index
+        // Find which character connects to this Right contact index
         int outputLeftIndex = -1;
 
         for (int charId = 0; charId < keyboardSize; charId++) {
@@ -95,17 +87,17 @@ public class RotorImpl implements Rotor , Serializable {
                     id);
         }
 
-        // 3. Calculate relative output index (Exit position - Offset)
+        // Calculate relative output index (Exit position - Offset)
         return (outputLeftIndex - position + keyboardSize) % keyboardSize;
     }
 
-    // Maps an input index through the rotor in the backward direction (Left -> Right)
+    // Maps an input index through the rotor in the backward direction (Left to Right)
     @Override
     public int mapBackward(int inputIndex) {
-        // 1. Calculate physical contact point on the Left side
+        // Calculate physical contact point on the Left side
         int contactIndex = (inputIndex + position) % keyboardSize;
 
-        // 2. Lookup: Find which character connects to this Left contact index
+        // Find which character connects to this Left contact index
         int outputRightIndex = -1;
 
         for (int charId = 0; charId < keyboardSize; charId++) {
@@ -123,24 +115,25 @@ public class RotorImpl implements Rotor , Serializable {
                     id);
         }
 
-        // 3. Calculate relative output index (Exit position - Offset)
+        // Calculate relative output index (Exit position - Offset)
         return (outputRightIndex - position + keyboardSize) % keyboardSize;
     }
 
-
-
     @Override
     public int getId() {
+
         return id;
     }
 
     @Override
     public int getPosition() {
+
         return position;
     }
 
     @Override
     public int getKeyboardSize() {
+
         return keyboardSize;
     }
 
@@ -153,7 +146,6 @@ public class RotorImpl implements Rotor , Serializable {
         }
 
             // Check column 0 (Right Position)
-
             this.position = letterPositions[newPosition][0];
     }
 

@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="EnigmaLogic">
-    <output-path>$PROJECT_DIR$/out/artifacts/EnigmaLogic</output-path>
+    <output-path>$PROJECT_DIR$/Submission</output-path>
     <root id="archive" name="Logic.jar">
       <element id="module-output" name="Logic" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jaxb-jxc.jar" path-in-jar="/" />
