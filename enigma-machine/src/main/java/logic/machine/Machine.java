@@ -40,4 +40,7 @@ public interface Machine {
     public char convert(char input);
 
     public Plugboard getPlugboard();
+
+    public int getRotorsCount();
+
 }

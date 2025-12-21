@@ -16,9 +16,9 @@ public class ConsoleInputCollector {
         this.scanner = scanner;
     }
 
-    public String readValidRotorIDs() {
+    public String readValidRotorIDs(int requiredCount) {
         while (true) {
-            System.out.println("Enter Rotor IDs (Left to Right, comma separated): ");
+            System.out.printf("Enter %d Rotor IDs (Left to Right, comma separated): %n", requiredCount);
             // We assume user enters Left to Right. The Engine reverses it
             String input = ConsoleInputReader.readLine(scanner).trim();
 
