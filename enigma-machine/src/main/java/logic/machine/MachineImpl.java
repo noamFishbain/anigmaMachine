@@ -20,6 +20,7 @@ public class MachineImpl implements Machine, Serializable {
     private final Map<String, Reflector> allAvailableReflectors;
     private boolean debugMode = false; // Default to true for logs
     private final CodeFormatter formatter;
+    private final Plugboard plugboard; // Used for swapping characters before and after the rotors
 
     // Main constructor from XML Descriptor
     public MachineImpl(MachineDescriptor descriptor) {
@@ -30,6 +31,7 @@ public class MachineImpl implements Machine, Serializable {
         this.activeRotors = new ArrayList<>();
         this.activeReflector = null;
         this.formatter = new CodeFormatter(this.allAvailableRotors, this.keyboard);
+        this.plugboard = new PlugboardImpl();
 
         // Load Rotors
         loadRotors(descriptor.getRotors());
@@ -90,24 +92,45 @@ public class MachineImpl implements Machine, Serializable {
                 result.append(c);
                 continue;
             }
-            result.append(processSingleCharacter(c));
+
+            result.append(convert(c));
         }
 
         logDebug("--- [END] Process Completed. Result: %s ---\n", result.toString());
         return result.toString();
     }
 
+    @Override
     // Handles the complete flow of a single character through the machine
-    private char processSingleCharacter(char inputChar) {
+    public char convert(char inputChar) {
         logDebug("\n[CHAR] Processing character: '%c'", inputChar);
+
+        // Plugboard (First Pass)- Before entering the rotors
+        char afterPlugboard = plugboard.convert(inputChar);
+        logDebug("  [PLUG]  Input '%c' -> Plugboard -> '%c'", inputChar, afterPlugboard);
+
+        // Rotors Logic
+        char afterRotors = processRotorsLogic(afterPlugboard);
+
+        // Plugboard (Second Pass)- After exiting the rotors
+        char result = plugboard.convert(afterRotors);
+        logDebug("  [PLUG]  Rotors '%c' -> Plugboard -> '%c'", afterRotors, result);
+
+        return result;
+    }
+
+    // Handles the passage of a character through the rotors and reflector
+    private char processRotorsLogic(char input) {
+        // Log state before stepping
         logDebug("  [STATE] Rotors BEFORE process (Left->Right): %s", getCurrentRotorPositions());
 
         // Step Rotors (Post-processing step logic)
         stepRotorsChain();
         logDebug("  [STEP]  Rotors moved to next position: %s", getCurrentRotorPositions());
 
-        int currentIndex = keyboard.toIndex(inputChar);
-        logDebug("  [IN]    Input index: %d ('%c')", currentIndex, inputChar);
+        // Convert char to index for rotor processing
+        int currentIndex = keyboard.toIndex(input);
+        logDebug("  [IN]    Rotor Input index: %d ('%c')", currentIndex, input);
 
         // Electrical Path
         currentIndex = passThroughRotorsForward(currentIndex);
@@ -116,7 +139,7 @@ public class MachineImpl implements Machine, Serializable {
 
         // Convert back to Char
         char outputChar = keyboard.toChar(currentIndex);
-        logDebug("  [OUT]   Final output: %d ('%c')", currentIndex, outputChar);
+        logDebug("  [OUT]   Rotor output: %d ('%c')", currentIndex, outputChar);
 
         return outputChar;
     }
@@ -253,4 +276,8 @@ public class MachineImpl implements Machine, Serializable {
     public Keyboard getKeyboard() {
         return keyboard; }
 
+    @Override
+    public Plugboard getPlugboard() {
+        return this.plugboard;
+    }
 }
