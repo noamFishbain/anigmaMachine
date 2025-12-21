@@ -20,7 +20,24 @@ public class XmlValidationRules {
 
         validateABC(abc);
         validateRotors(enigma.getBTERotors().getBTERotor(), abc); // Updated to pass ABC string
+        validateRotorsCount(enigma);
         validateReflectors(enigma.getBTEReflectors().getBTEReflector());
+    }
+
+    //Validates that rotors-count is within valid range
+    private void validateRotorsCount(BTEEnigma enigma) throws Exception {
+        int count = enigma.getRotorsCount();
+        int definedRotors = enigma.getBTERotors().getBTERotor().size();
+
+        if (count < 1) {
+            // You need to add XML_ROTOR_COUNT_LESS_THAN_TWO to your EnigmaException ErrorCode enum
+            throw new EnigmaException(EnigmaException.ErrorCode.XML_ROTOR_COUNT_LESS_THAN_ONE, count);
+        }
+
+        if (count > definedRotors) {
+            // You need to add XML_ROTOR_COUNT_HIGHER_THAN_DEFINED to your EnigmaException ErrorCode enum
+            throw new EnigmaException(EnigmaException.ErrorCode.XML_ROTOR_COUNT_HIGHER_THAN_DEFINED, count, definedRotors);
+        }
     }
 
     // Validation: alphabet length must be an even number
@@ -33,11 +50,6 @@ public class XmlValidationRules {
     // Validates the loaded rotors against multiple rules: min count, sequential IDs, mapping size, and internal logic.
     private void validateRotors(List<BTERotor> rotors, String abc) throws Exception {
         int expectedMappingSize = abc.length();
-
-        // Check if there are enough rotors defined (Minimum 3 expected)
-        if (rotors.size() < 3) {
-            throw new EnigmaException(EnigmaException.ErrorCode.XML_ROTOR_COUNT_LOW,3);
-        }
 
         // Check sequential IDs (1, 2, 3...)
         List<Integer> ids = rotors.stream().map(BTERotor::getId).sorted().collect(Collectors.toList());

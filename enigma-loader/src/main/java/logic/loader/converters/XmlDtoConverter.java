@@ -11,13 +11,14 @@ import logic.loader.dto.RotorDescriptor;
 import logic.machine.Machine;
 import logic.machine.MachineImpl;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /** This class is responsible for converting raw JAXB objects loaded from XML
  * into clean, decoupled DTOs (Data Transfer Objects) used by the Engine layer
  */
-public class XmlDtoConverter {
+public class XmlDtoConverter implements Serializable {
 
     // Converts the raw BTEEnigma object into a MachineDescriptor and initializes the MachineImpl
     public Machine createMachineFromBTE(BTEEnigma bteEnigma) {
@@ -34,14 +35,14 @@ public class XmlDtoConverter {
         }
 
         // Get required rotors count
-        int requiredRotorsCount = 3;
+        int requiredRotorsCount = bteEnigma.getRotorsCount();
 
         // Build the final Descriptor
         MachineDescriptor descriptor = new MachineDescriptor(
-                abc,
+                requiredRotorsCount,   // Dynamic count from XML
                 rotorDescriptors,
                 reflectorDescriptors,
-                requiredRotorsCount
+                abc
         );
 
         return new MachineImpl(descriptor);
