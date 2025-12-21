@@ -12,15 +12,17 @@ public class CodeConfiguration implements Serializable {
     private final List<Integer> rotorIdsInOrder; // Rotor IDs from LEFT to RIGHT
     private final List<Character> rotorPositions; // Starting positions of each rotor, same order as rotorIdsInOrder
     private final String reflectorId; // Reflector identifier, Roman numeral identifier
+    private final String plugs; // Plugboard connections
 
     // Creates a new CodeConfiguration.
-    public CodeConfiguration(List<Integer> rotorIdsInOrder, List<Character> rotorPositions, String reflectorId) {
+    public CodeConfiguration(List<Integer> rotorIdsInOrder, List<Character> rotorPositions, String reflectorId, String plugs) {
         validateInputs(rotorIdsInOrder, rotorPositions, reflectorId);
 
         // Defensive copies ensure immutability even if the original list is modified outside
         this.rotorIdsInOrder = Collections.unmodifiableList(rotorIdsInOrder);
         this.rotorPositions = Collections.unmodifiableList(rotorPositions);
         this.reflectorId = reflectorId;
+        this.plugs = plugs;
     }
 
     private void validateInputs(List<Integer> rotorIds, List<Character> positions, String refId) {
@@ -56,16 +58,27 @@ public class CodeConfiguration implements Serializable {
         return reflectorId;
     }
 
+    // Returns the plugboard connections string (e.g. "AB|CD"). Returns an empty string if no plugs are configured.
+    public String getPlugs() {
+        return plugs;
+    }
+
     // Creates a new configuration instance with updated positions, keeping other fields same.
     public CodeConfiguration withRotorPositions(List<Character> newPositions) {
-        return new CodeConfiguration(rotorIdsInOrder, newPositions, reflectorId);
+        return new CodeConfiguration(rotorIdsInOrder, newPositions, reflectorId, plugs);
     }
 
     // Returns a compact string representation required for history/specs. Format: <ID,ID...><Pos,Pos...><ReflectorID>
     public String toCompactString() {
-        return formatList(rotorIdsInOrder) +
+        String base = formatList(rotorIdsInOrder) +
                 formatList(rotorPositions) +
                 "<" + reflectorId + ">";
+
+        if (plugs != null && !plugs.isEmpty()) {
+            base += "<" + plugs + ">";
+        }
+
+        return base;
     }
 
     private String formatList(List<?> list) {

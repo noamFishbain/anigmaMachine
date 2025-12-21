@@ -10,20 +10,20 @@ import java.util.List;
  */
 public class MachineDescriptor implements Serializable {
 
-    // שינוי 1: הוספת מזהה גרסה (מומלץ ל-Serializable)
     private static final long serialVersionUID = 1L;
-
     private final String alphabet;
     private final List<RotorDescriptor> rotors;
     private final List<ReflectorDescriptor> reflectors;
     private final int rotorsCount;
+    private final String plugs;
 
     public MachineDescriptor(int rotorsCount, List<RotorDescriptor> rotors,
-                             List<ReflectorDescriptor> reflectors, String alphabet) {
+                             List<ReflectorDescriptor> reflectors, String alphabet, String plugs) {
         this.rotorsCount = rotorsCount;
         this.rotors = rotors;
         this.reflectors = reflectors != null ? Collections.unmodifiableList(reflectors) : Collections.emptyList();
         this.alphabet = alphabet;
+        this.plugs = plugs;
     }
 
     public String getAlphabet() {
@@ -31,14 +31,20 @@ public class MachineDescriptor implements Serializable {
     }
 
     public List<RotorDescriptor> getRotors() {
+
         return rotors;
     }
 
     public List<ReflectorDescriptor> getReflectors() {
+
         return reflectors;
     }
 
     public int getRotorsCount() {
+
         return rotorsCount;
     }
+
+    public String getPlugs() {
+        return plugs; }
 }

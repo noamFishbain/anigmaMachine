@@ -137,8 +137,9 @@ public class ConsoleApp {
 
             String positions = inputCollector.readValidPositions(requiredRotors);
             int reflectorNum = inputCollector.readValidReflectorID();
+            String plugs = inputCollector.readValidPlugs();
 
-            String result = engine.setManualCode(rotorIDs, positions, reflectorNum);
+            String result = engine.setManualCode(rotorIDs, positions, reflectorNum, plugs);
             System.out.println("Code set successfully: " + result);
 
         } catch (Exception e) {

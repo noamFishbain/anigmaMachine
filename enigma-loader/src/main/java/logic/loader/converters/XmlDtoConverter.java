@@ -42,7 +42,8 @@ public class XmlDtoConverter implements Serializable {
                 requiredRotorsCount,   // Dynamic count from XML
                 rotorDescriptors,
                 reflectorDescriptors,
-                abc
+                abc,
+                ""
         );
 
         return new MachineImpl(descriptor);
