@@ -1,6 +1,7 @@
 package logic.machine;
 
 import logic.machine.components.Keyboard;
+import logic.machine.components.Plugboard;
 import logic.machine.components.Reflector;
 import logic.machine.components.Rotor;
 
@@ -23,13 +24,20 @@ public interface Machine {
 
     // Getters to check if the machine is configured
     String formatConfiguration(List<Integer> rotorIDs, List<Character> positions, String reflectorID);
+
     int getAllRotorsCount();
+
     public int getAllReflectorsCount();
 
     // Getters for ALL available components
     Map<Integer, Rotor> getAllAvailableRotors();
+
     Map<String, Reflector> getAllAvailableReflectors();
 
     // Allows the engine/UI to access the keyboard for ABC validation
     Keyboard getKeyboard();
+
+    public char convert(char input);
+
+    public Plugboard getPlugboard();
 }
