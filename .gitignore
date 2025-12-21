@@ -1,6 +1,8 @@
 # Compiled class files
 out/
 target/
+.idea/
+*.iml
 *.class
 
 # macOS system files
