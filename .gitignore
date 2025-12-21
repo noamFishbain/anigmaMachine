@@ -1,3 +1,22 @@
+# Compiled class files
+out/
 target/
 .idea/
 *.iml
+*.class
+
+# macOS system files
+.DS_Store
+
+# Logs & Temp
+*.log
+*.tmp
+*.swp
+
+# --- IntelliJ IDEA (Collaborative Config) ---
+# Ignore personal user settings
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/dictionaries
+.idea/tasks.xml
+.idea/shelf

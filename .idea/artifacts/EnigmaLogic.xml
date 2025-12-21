@@ -1,0 +1,28 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="EnigmaLogic">
+    <output-path>$PROJECT_DIR$/Submission</output-path>
+    <root id="archive" name="Logic.jar">
+      <element id="module-output" name="Logic" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jaxb-jxc.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jaxb-xjc.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jaxb-core.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jaxb-impl.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/angus-activation.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/ReflectionTester.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jakarta.xml.bind-api.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jackson-datatype-jdk8.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jakarta.activation-api.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jackson-datatype-jsr310.jar" path-in-jar="/" />
+      <element id="file-copy" path="$PROJECT_DIR$/lib/jaxb-jxc.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/lib/jaxb-xjc.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/lib/jaxb-core.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/lib/jaxb-impl.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/lib/angus-activation.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/lib/ReflectionTester.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/lib/jakarta.xml.bind-api.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/lib/jackson-datatype-jdk8.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/lib/jakarta.activation-api.jar" />
+      <element id="file-copy" path="$PROJECT_DIR$/lib/jackson-datatype-jsr310.jar" />
+    </root>
+  </artifact>
+</component>
