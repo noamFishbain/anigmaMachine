@@ -21,7 +21,7 @@ public class MachineImpl implements Machine, Serializable {
     private boolean debugMode = false; // Default to true for logs
     private final CodeFormatter formatter;
     private final Plugboard plugboard; // Used for swapping characters before and after the rotors
-
+    private final int rotorsCount;
     // Main constructor from XML Descriptor
     public MachineImpl(MachineDescriptor descriptor) {
         this.keyboard = new KeyboardImpl(descriptor.getAlphabet());
@@ -32,6 +32,8 @@ public class MachineImpl implements Machine, Serializable {
         this.activeReflector = null;
         this.formatter = new CodeFormatter(this.allAvailableRotors, this.keyboard);
         this.plugboard = new PlugboardImpl();
+        this.rotorsCount = descriptor.getRotorsCount();
+
 
         // Load Rotors
         loadRotors(descriptor.getRotors());
@@ -200,7 +202,14 @@ public class MachineImpl implements Machine, Serializable {
             throw new EnigmaException(EnigmaException.ErrorCode.
                  USER_REFLECTOR_NOT_FOUND, reflectorID );
         }
-
+        //  Check if the number of selected rotors matches the XML definition
+        if (rotorIDs.size() != this.rotorsCount) {
+            throw new EnigmaException(
+                    EnigmaException.ErrorCode.USER_INVALID_ROTOR_COUNT,
+                    this.rotorsCount,
+                    rotorIDs.size()
+            );
+        }
         // Configure Rotors (Right to Left), rotorIDs input is Left to Right (3, 2, 1).
         // We need to store them Right to Left for correct processing logic
 
@@ -279,5 +288,10 @@ public class MachineImpl implements Machine, Serializable {
     @Override
     public Plugboard getPlugboard() {
         return this.plugboard;
+    }
+
+    @Override
+    public int getRotorsCount() {
+        return this.rotorsCount;
     }
 }

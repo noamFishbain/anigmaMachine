@@ -85,7 +85,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
 
     @Override
     public void setAutomaticCode() {
-        final int count = REQUIRED_ROTOR_COUNT_HARDCODED;
+        final int count = machine.getRotorsCount();
 
         // Check if machine is loaded
         ensureMachineLoaded();
@@ -102,7 +102,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     public MachineSpecs getMachineSpecs() {
         if (machine == null) {
             // Return empty specs if no machine is loaded
-            return new MachineSpecs(0, 0, 0, "", "");
+            return new MachineSpecs(0, 0, 0, "", "",0);
         }
 
         // Create and return the DTO
@@ -111,7 +111,8 @@ public class EnigmaEngineImpl implements EnigmaEngine {
                 machine.getAllReflectorsCount(),
                 machine.getProcessedMessages(),
                 formatCode(originalCode),
-                formatCode(currentCode)
+                formatCode(currentCode),
+                machine.getRotorsCount()
         );
     }
 
@@ -167,7 +168,12 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         // Save to history
         historyList.add(new MachineHistoryRecord(input, output, duration, startConfigStr));
     }
-
+    @Override
+    public int getRequiredRotorCount(){
+        if (machine == null) return 0;
+        // UPDATE: Return dynamic count
+        return machine.getRotorsCount();
+    }
     // Resets the machine to its original configuration
     @Override
     public void reset() {
@@ -197,10 +203,6 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         }
     }
 
-    @Override
-    public int getRequiredRotorCount(){
-        return REQUIRED_ROTOR_COUNT_HARDCODED;
-    }
 
     @Override
     public List<MachineHistoryRecord> getHistory() {

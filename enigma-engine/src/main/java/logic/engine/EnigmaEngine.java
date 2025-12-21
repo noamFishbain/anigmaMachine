@@ -39,9 +39,7 @@ public interface EnigmaEngine {
 
     // Returns the list of processed messages history and statistics
     List<MachineHistoryRecord> getHistory();
-
-    // Returns the number of rotors required for configuration (for now 3)
-    int getRequiredRotorCount();
+    public int getRequiredRotorCount();
 
     void loadGame(String pathWithoutExtension) throws IOException, ClassNotFoundException;
     void saveGame(String pathWithoutExtension) throws IOException;
