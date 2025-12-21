@@ -16,6 +16,8 @@ public class EnigmaException extends RuntimeException {
         FILE_NOT_XML_TYPE("Error: The file '%s' must be an XML file."),
         XML_ABC_ODD_LENGTH("Error: ABC size must be even. Current size: %d."),
         XML_ROTOR_COUNT_LOW("Error: Not enough rotors defined. Minimum %d expected."),
+        XML_ROTOR_COUNT_LESS_THAN_ONE("Rotors count must be at least 1. Defined: %d"),
+        XML_ROTOR_COUNT_HIGHER_THAN_DEFINED("Cannot use %d rotors because only %d are defined in the file"),
         XML_ROTOR_ID_SEQUENCE("Error: Rotor IDs must be unique and sequential (1 to N)."),
         XML_ROTOR_MAPPING_SIZE("Error: Rotor ID %d positioning count does not match ABC size."),
         XML_ROTOR_INVALID_CHARS("Error: Rotor %d contains invalid characters not in ABC: %s, %s."),
