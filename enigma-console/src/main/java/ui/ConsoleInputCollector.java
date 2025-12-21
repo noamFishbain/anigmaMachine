@@ -84,8 +84,25 @@ public class ConsoleInputCollector {
             catch (EnigmaException e) {
                 System.out.println(e.getMessage());
             }
+        }
+    }
 
+    // Reads plugboard settings from the user
+    public String readValidPlugs() {
+        while (true) {
+            System.out.println("Enter plugs as a continuous string (e.g. AB49) or press Enter to skip:");
+            String input = ConsoleInputReader.readLine(scanner);
 
+            if (input.isEmpty()) {
+                return "";
+            }
+
+            // Checks for even length
+            if (input.length() % 2 != 0) {
+                System.out.println("Error: Plugs string must be of even length (pairs).");
+                continue;
+            }
+            return input;
         }
     }
 }

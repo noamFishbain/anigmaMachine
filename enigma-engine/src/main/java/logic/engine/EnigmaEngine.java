@@ -20,7 +20,7 @@ public interface EnigmaEngine {
     void loadMachineFromXml(String path) throws Exception;
 
     // Sets a manual code configuration based on user input
-    String setManualCode(String rotorIDsString, String positionsString, int reflectorNum) throws Exception;
+    String setManualCode(String rotorIDsString, String positionsString, int reflectorNum, String plugs) throws Exception;
 
     // Generates random configuration
     void setAutomaticCode();

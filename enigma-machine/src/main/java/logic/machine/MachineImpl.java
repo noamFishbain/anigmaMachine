@@ -38,6 +38,11 @@ public class MachineImpl implements Machine, Serializable {
 
         // Load Reflectors
         loadReflectors(descriptor.getReflectors());
+
+        // Load Plugs
+        if (descriptor.getPlugs() != null) {
+            loadPlugs(descriptor.getPlugs());
+        }
     }
 
     // Helper method to load rotors from descriptors
@@ -71,6 +76,26 @@ public class MachineImpl implements Machine, Serializable {
             }
             Reflector reflector = new ReflectorImpl(mapping);
             this.allAvailableReflectors.put(desc.getId(), reflector);
+        }
+    }
+
+    // Helper method to load plugs from the descriptor
+    private void loadPlugs(String plugsString) {
+        // If no plugs are defined, do nothing and return
+        if (plugsString == null || plugsString.trim().isEmpty()) {
+            return;
+        }
+
+        // Plugs must be defined in pairs. If the length is odd, the definition is invalid
+        if (plugsString.length() % 2 != 0) {
+            throw new IllegalArgumentException("Invalid plug definitions: Must be pairs of letters.");
+        }
+
+        // Iterate through the string in steps of 2 to extract and add each pair
+        for (int i = 0; i < plugsString.length(); i += 2) {
+            char c1 = plugsString.charAt(i);
+            char c2 = plugsString.charAt(i + 1);
+            this.plugboard.addPlug(c1, c2);
         }
     }
 
@@ -194,7 +219,7 @@ public class MachineImpl implements Machine, Serializable {
 
     // Configures the machine with a specific set of rotors, starting positions, and a reflector
     @Override
-    public void setConfiguration(List<Integer> rotorIDs, List<Character> startingPositions, String reflectorID) {
+    public void setConfiguration(List<Integer> rotorIDs, List<Character> startingPositions, String reflectorID, String plugs) {
         this.activeReflector = allAvailableReflectors.get(reflectorID);
         if (this.activeReflector == null) {
             throw new EnigmaException(EnigmaException.ErrorCode.
@@ -203,8 +228,13 @@ public class MachineImpl implements Machine, Serializable {
 
         // Configure Rotors (Right to Left), rotorIDs input is Left to Right (3, 2, 1).
         // We need to store them Right to Left for correct processing logic
-
         setupRotors(rotorIDs, startingPositions);
+
+        // Define plugin board
+        this.plugboard.clear(); // Clear the last plugin board
+        if (plugs != null && !plugs.isEmpty()) {
+            loadPlugs(plugs);
+        }
     }
 
     private void setupRotors(List<Integer> rotorIDs, List<Character> startingPositions) {

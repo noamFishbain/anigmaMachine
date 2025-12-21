@@ -48,22 +48,22 @@ public class EnigmaEngineImpl implements EnigmaEngine {
 
     // Sets a manual code configuration based on user input
     @Override
-    public String setManualCode(String rotorIDsString, String positionsString, int reflectorNum) throws Exception {
+    public String setManualCode(String rotorIDsString, String positionsString, int reflectorNum, String plugs) throws Exception {
         // Check if machine is loaded
         ensureMachineLoaded();
 
         // Parse and Validate all inputs against machine rules
-        CodeConfiguration initialConfig = parseAndValidateManualInput(rotorIDsString, positionsString, reflectorNum);
+        CodeConfiguration initialConfig = parseAndValidateManualInput(rotorIDsString, positionsString, reflectorNum, plugs);
 
         // Physically configure the machine and update engine state
-        updateEngineConfiguration(initialConfig.getRotorIdsInOrder(), initialConfig.getRotorPositions(), initialConfig.getReflectorId());
+        updateEngineConfiguration(initialConfig.getRotorIdsInOrder(), initialConfig.getRotorPositions(), initialConfig.getReflectorId(), plugs);
 
         // Return the formatted current code for UI display
         return formatCode(this.currentCode);
     }
 
     // Parses the raw strings, converts reflector ID, validates all rules, and returns a CodeConfiguration DTO.
-    private CodeConfiguration parseAndValidateManualInput(String rotorIDsString, String positionsString, int reflectorNum) throws Exception {
+    private CodeConfiguration parseAndValidateManualInput(String rotorIDsString, String positionsString, int reflectorNum, String plugs) throws Exception {
 
         // Parsing and Basic Conversion
         List<Integer> rotorIDs = parser.parseRotorIDs(rotorIDsString);
@@ -80,7 +80,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
                 .collect(Collectors.toList());
 
         // Create and return the configuration object (CodeConfiguration also validates size match)
-        return new CodeConfiguration(rotorIDs, positionsList, reflectorID);
+        return new CodeConfiguration(rotorIDs, positionsList, reflectorID, plugs);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         List<Character> selectedPositions = selectRandomPositions(count);
         String selectedReflectorID = selectRandomReflector();
 
-        updateEngineConfiguration(selectedRotorIDs, selectedPositions, selectedReflectorID);
+        updateEngineConfiguration(selectedRotorIDs, selectedPositions, selectedReflectorID, "");
     }
 
     // Returns a summary of the machine's runtime state and configuration details
@@ -182,7 +182,8 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         machine.setConfiguration(
                 originalCode.getRotorIdsInOrder(),
                 originalCode.getRotorPositions(),
-                originalCode.getReflectorId()
+                originalCode.getReflectorId(),
+                originalCode.getPlugs()
         );
 
         // Reset the Engine State
@@ -224,12 +225,12 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         );
     }
 
-    private void updateEngineConfiguration(List<Integer> rotorIDs, List<Character> positions, String reflectorID) {
+    private void updateEngineConfiguration(List<Integer> rotorIDs, List<Character> positions, String reflectorID, String plugs) {
         // Physically configure the machine
-        machine.setConfiguration(rotorIDs, positions, reflectorID);
+        machine.setConfiguration(rotorIDs, positions, reflectorID, plugs);
 
         // Save State
-        CodeConfiguration newConfig = new CodeConfiguration(rotorIDs, positions, reflectorID);
+        CodeConfiguration newConfig = new CodeConfiguration(rotorIDs, positions, reflectorID, plugs);
         this.originalCode = newConfig;
         this.currentCode = newConfig;
     }
