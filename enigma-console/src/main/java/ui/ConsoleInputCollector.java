@@ -2,6 +2,8 @@ package ui;
 
 import logic.exceptions.EnigmaException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -16,25 +18,94 @@ public class ConsoleInputCollector {
         this.scanner = scanner;
     }
 
-    public String readValidRotorIDs(int requiredCount) {
+    public String readValidRotorIDs(int requiredCount, int maxRotorId) {
         while (true) {
             System.out.printf("Enter %d Rotor IDs (Left to Right, comma separated): %n", requiredCount);
             // We assume user enters Left to Right. The Engine reverses it
             String input = ConsoleInputReader.readLine(scanner).trim();
 
+            // Check for empty input
             if (input.isEmpty()) {
-                System.out.println(EnigmaException.ErrorCode.USER_INPUT_EMPTY);
+                System.out.println(EnigmaException.ErrorCode.USER_INPUT_EMPTY.getMessageTemplate());
                 continue;
             }
 
-            if (!input.matches("^[0-9, ]+$")) {
-                System.out.println(EnigmaException.ErrorCode.USER_INPUT_NOT_NUMBER);
+            // Check syntax (only numbers, commas, and spaces allowed)
+            if (!validateSyntax(input)) {
+                continue;
+            }
+
+            // Check for maching rotors count input
+            if (!validateCount(input, requiredCount)) {
+                continue;
+            }
+
+            // Logical validation (Range and Duplicates)
+            if (!isRotorInputValid(input, maxRotorId)) {
+                // Error messages are printed inside the helper method
                 continue;
             }
 
             return input;
         }
     }
+
+    // Helper method to validate specific rotor logic
+    private boolean isRotorInputValid(String input, int maxRotorId) {
+        String[] parts = input.split("[, ]+");
+        List<Integer> invalidIds = new ArrayList<>();
+        List<Integer> duplicateCheck = new ArrayList<>();
+        boolean hasError = false;
+
+        for (String part : parts) {
+            try {
+                int id = Integer.parseInt(part);
+
+                // Range Check: Ensure ID exists in the machine
+                if (id < 1 || id > maxRotorId) {
+                    invalidIds.add(id);
+                }
+
+                // Duplicate Check: Ensure the user didn't select the same rotor twice
+                if (duplicateCheck.contains(id)) {
+                    System.out.println("Error: Duplicate Rotor ID entered: " + id);
+                    hasError = true;
+                }
+                duplicateCheck.add(id);
+
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        // Report non-existent rotors
+        if (!invalidIds.isEmpty()) {
+            System.out.println("Error: The following Rotor IDs do not exist: " + invalidIds);
+            System.out.println("Available IDs range: 1 - " + maxRotorId);
+            return false;
+        }
+
+        return !hasError;
+    }
+
+    // Check syntax (only numbers, commas, and spaces allowed)
+    private boolean validateSyntax(String input) {
+        if (!input.matches("^[0-9, ]+$")) {
+            System.out.println(EnigmaException.ErrorCode.USER_INPUT_NOT_NUMBER.getMessageTemplate());
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateCount(String input, int requiredCount) {
+        int count = input.split("[, ]+").length;
+        if (count != requiredCount) {
+            System.out.println("Error: You must select exactly " + requiredCount + " rotors. You selected " + count + ".");
+            return false;
+        }
+        return true;
+    }
+
+
 
     public String readValidPositions(int expectedLength) {
         while (true) {
@@ -90,8 +161,8 @@ public class ConsoleInputCollector {
     // Reads plugboard settings from the user
     public String readValidPlugs() {
         while (true) {
-            System.out.println("Enter plugs as a continuous string (e.g. AB49) or press Enter to skip:");
-            String input = ConsoleInputReader.readLine(scanner);
+            System.out.println("Enter plug pairs without separation (e.g. ABZD: Means A<->B, Z<->D) or press Enter to skip:");
+            String input = ConsoleInputReader.readLine(scanner).trim().toUpperCase();
 
             if (input.isEmpty()) {
                 return "";

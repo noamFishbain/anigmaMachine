@@ -1,5 +1,7 @@
 package logic.engine;
 
+import logic.engine.utils.AutomaticCodeGenerator;
+import logic.engine.utils.CodeFormatter;
 import logic.engine.utils.InputParser;
 import logic.engine.validation.EnigmaCodeValidator;
 import logic.exceptions.EnigmaException;
@@ -10,9 +12,7 @@ import logic.machine.Machine;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
@@ -26,12 +26,13 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     private final List<MachineHistoryRecord> historyList = new ArrayList<>();
     private transient InputParser parser;
     private transient EnigmaCodeValidator validator;
-    private static final int REQUIRED_ROTOR_COUNT_HARDCODED = 3;
+    private transient AutomaticCodeGenerator autoGenerator;
 
     public EnigmaEngineImpl() {
 
         this.machine = null;
         this.parser = new InputParser();
+        this.autoGenerator = new AutomaticCodeGenerator();
     }
 
     @Override
@@ -56,10 +57,10 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         CodeConfiguration initialConfig = parseAndValidateManualInput(rotorIDsString, positionsString, reflectorNum, plugs);
 
         // Physically configure the machine and update engine state
-        updateEngineConfiguration(initialConfig.getRotorIdsInOrder(), initialConfig.getRotorPositions(), initialConfig.getReflectorId(), plugs);
+        updateEngineConfiguration(initialConfig);
 
         // Return the formatted current code for UI display
-        return formatCode(this.currentCode);
+        return CodeFormatter.formatCode(machine, this.currentCode);
     }
 
     // Parses the raw strings, converts reflector ID, validates all rules, and returns a CodeConfiguration DTO.
@@ -85,16 +86,11 @@ public class EnigmaEngineImpl implements EnigmaEngine {
 
     @Override
     public void setAutomaticCode() {
-        final int count = machine.getRotorsCount();
-
-        // Check if machine is loaded
         ensureMachineLoaded();
 
-        List<Integer> selectedRotorIDs = selectRandomRotors(count);
-        List<Character> selectedPositions = selectRandomPositions(count);
-        String selectedReflectorID = selectRandomReflector();
+        CodeConfiguration autoConfig = autoGenerator.generate(machine);
 
-        updateEngineConfiguration(selectedRotorIDs, selectedPositions, selectedReflectorID, "");
+        updateEngineConfiguration(autoConfig);
     }
 
     // Returns a summary of the machine's runtime state and configuration details
@@ -110,8 +106,8 @@ public class EnigmaEngineImpl implements EnigmaEngine {
                 machine.getAllRotorsCount(),
                 machine.getAllReflectorsCount(),
                 machine.getProcessedMessages(),
-                formatCode(originalCode),
-                formatCode(currentCode),
+                CodeFormatter.formatCode(machine, originalCode),
+                CodeFormatter.formatCode(machine, currentCode),
                 machine.getRotorsCount()
         );
     }
@@ -123,7 +119,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         String cleanedText = performPreProcessChecks(text);
 
         // Delegate the actual processing and time measurement
-        String startConfigStr = formatCode(currentCode);
+        String startConfigStr = CodeFormatter.formatCode(machine, currentCode);
 
         // Measure time and process text
         long start = System.nanoTime();
@@ -171,9 +167,10 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     @Override
     public int getRequiredRotorCount(){
         if (machine == null) return 0;
-        // UPDATE: Return dynamic count
+        // Return dynamic count
         return machine.getRotorsCount();
     }
+
     // Resets the machine to its original configuration
     @Override
     public void reset() {
@@ -185,15 +182,8 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         }
 
         // Reset the Physical Machine
-        machine.setConfiguration(
-                originalCode.getRotorIdsInOrder(),
-                originalCode.getRotorPositions(),
-                originalCode.getReflectorId(),
-                originalCode.getPlugs()
-        );
+        updateEngineConfiguration(originalCode);
 
-        // Reset the Engine State
-        this.currentCode = this.originalCode;
     }
 
     @Override
@@ -204,9 +194,9 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         }
     }
 
-
     @Override
     public List<MachineHistoryRecord> getHistory() {
+
         return historyList;
     }
 
@@ -216,47 +206,18 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         }
     }
 
-    private String formatCode(CodeConfiguration config) {
-        if (config == null) {
-            return "";
-        }
-        return machine.formatConfiguration(
+    private void updateEngineConfiguration(CodeConfiguration config) {
+        // Physically configure the machine
+        machine.setConfiguration(
                 config.getRotorIdsInOrder(),
                 config.getRotorPositions(),
-                config.getReflectorId()
+                config.getReflectorId(),
+                config.getPlugs()
         );
-    }
-
-    private void updateEngineConfiguration(List<Integer> rotorIDs, List<Character> positions, String reflectorID, String plugs) {
-        // Physically configure the machine
-        machine.setConfiguration(rotorIDs, positions, reflectorID, plugs);
 
         // Save State
-        CodeConfiguration newConfig = new CodeConfiguration(rotorIDs, positions, reflectorID, plugs);
-        this.originalCode = newConfig;
-        this.currentCode = newConfig;
-    }
-
-    private List<Integer> selectRandomRotors(int count) {
-        List<Integer> availableRotorIDs = new ArrayList<>(machine.getAllAvailableRotors().keySet());
-        Collections.shuffle(availableRotorIDs);
-        return availableRotorIDs.subList(0, count);
-    }
-
-    private List<Character> selectRandomPositions(int count) {
-        String keyboard = machine.getKeyboard().asString();
-        Random random = new Random();
-        List<Character> positions = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            positions.add(keyboard.charAt(random.nextInt(keyboard.length())));
-        }
-        return positions;
-    }
-
-    private String selectRandomReflector() {
-        List<String> availableReflectors = new ArrayList<>(machine.getAllAvailableReflectors().keySet());
-        Random random = new Random();
-        return availableReflectors.get(random.nextInt(availableReflectors.size()));
+        this.originalCode = config;
+        this.currentCode = config;
     }
 
     @Override
@@ -282,6 +243,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
 
     @Override
     public boolean isCodeConfigurationSet() {
+
         return this.originalCode != null;
     }
 
@@ -323,6 +285,10 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         if (this.parser == null) {
             // Assuming InputParser is stateless and can be recreated easily
             this.parser = new InputParser();
+        }
+
+        if (this.autoGenerator == null) {
+            this.autoGenerator = new AutomaticCodeGenerator();
         }
     }
 

@@ -122,19 +122,11 @@ public class ConsoleApp {
     // Command 3: Collects rotor IDs, positions, and reflector ID from the user
     private void handleManualCode() {
         try {
-
-
             MachineSpecs specs = engine.getMachineSpecs();
-            int requiredRotors = specs.getRequiredRotorsCount();
-            String rotorIDs = inputCollector.readValidRotorIDs(requiredRotors);
+            int requiredRotors = engine.getRequiredRotorCount();
+            int totalRotors = specs.getTotalRotors();
 
-
-            int selectedCount = rotorIDs.split("[, ]+").length;
-            if (selectedCount != requiredRotors) {
-                System.out.println("Error: You must select exactly " + requiredRotors + " rotors. You selected " + selectedCount + ".");
-                return;
-            }
-
+            String rotorIDs = inputCollector.readValidRotorIDs(requiredRotors, totalRotors);
             String positions = inputCollector.readValidPositions(requiredRotors);
             int reflectorNum = inputCollector.readValidReflectorID();
             String plugs = inputCollector.readValidPlugs();
