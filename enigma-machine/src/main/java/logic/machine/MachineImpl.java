@@ -22,6 +22,7 @@ public class MachineImpl implements Machine, Serializable {
     private final CodeFormatter formatter;
     private final Plugboard plugboard; // Used for swapping characters before and after the rotors
     private final int rotorsCount;
+
     // Main constructor from XML Descriptor
     public MachineImpl(MachineDescriptor descriptor) {
         this.keyboard = new KeyboardImpl(descriptor.getAlphabet());

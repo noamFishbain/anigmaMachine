@@ -22,8 +22,8 @@ public interface EnigmaEngine {
     // Sets a manual code configuration based on user input
     String setManualCode(String rotorIDsString, String positionsString, int reflectorNum, String plugs) throws Exception;
 
-    // Generates random configuration
-    void setAutomaticCode();
+    // Sets a automatic code configuration
+    public void setAutomaticCode();
 
     // Returns MachineSpecs - metadata about the loaded machine
     MachineSpecs getMachineSpecs();

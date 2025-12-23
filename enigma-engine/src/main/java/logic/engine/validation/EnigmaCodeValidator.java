@@ -16,25 +16,24 @@ public class EnigmaCodeValidator {
 
     private final Machine machine;
 
-    private static final int REQUIRED_ROTOR_COUNT = 3;
-
     public EnigmaCodeValidator(Machine machine) {
+
         this.machine = machine;
     }
 
     public void validateAllManualCode(List<Integer> rotorIDs, String positionsString, String alphabet) {
-        validateRotorCount(rotorIDs);
+        validateRotorCount(rotorIDs, machine.getRotorsCount());
         validateRotorIDs(rotorIDs);
         validatePositions(positionsString, rotorIDs.size());
         validateCharacter(positionsString, alphabet);
     }
 
-    private void validateRotorCount(List<Integer> rotorIDs) {
-        // Check exactly 3 Rotors
-        if (rotorIDs.size() != REQUIRED_ROTOR_COUNT) {
+    public void validateRotorCount(List<Integer> rotorIDs, int rotorsExpectedCount) {
+        // Check exactly Rotors expectedCount
+        if (rotorIDs.size() != rotorsExpectedCount) {
             throw new EnigmaException(
                     EnigmaException.ErrorCode.
-                            USER_INVALID_ROTOR_COUNT,REQUIRED_ROTOR_COUNT,
+                            USER_INVALID_ROTOR_COUNT,rotorsExpectedCount,
                             rotorIDs.size());
         }
     }
