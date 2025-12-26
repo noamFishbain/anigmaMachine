@@ -1,10 +1,10 @@
 package logic.machine.components;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PlugboardImpl implements Plugboard {
-
+public class PlugboardImpl implements Plugboard, Serializable {
     // Maps a character to its swapped partner (e.g: A to Z, Z to A)
     private final Map<Character, Character> plugs;
 

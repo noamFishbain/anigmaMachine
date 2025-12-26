@@ -2,6 +2,7 @@ package logic.engine;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.io.Serializable;
 import logic.exceptions.EnigmaException;
@@ -19,8 +20,8 @@ public class CodeConfiguration implements Serializable {
         validateInputs(rotorIdsInOrder, rotorPositions, reflectorId);
 
         // Defensive copies ensure immutability even if the original list is modified outside
-        this.rotorIdsInOrder = Collections.unmodifiableList(rotorIdsInOrder);
-        this.rotorPositions = Collections.unmodifiableList(rotorPositions);
+        this.rotorIdsInOrder = Collections.unmodifiableList(new ArrayList<>(rotorIdsInOrder));
+        this.rotorPositions = Collections.unmodifiableList(new ArrayList<>(rotorPositions));
         this.reflectorId = reflectorId;
         this.plugs = plugs;
     }

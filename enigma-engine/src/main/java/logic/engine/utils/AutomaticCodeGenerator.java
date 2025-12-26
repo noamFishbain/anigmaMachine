@@ -32,7 +32,7 @@ public class AutomaticCodeGenerator {
         String selectedPlugs = selectRandomPlugs(machine);
 
         // Return the configuration object (Empty plugs string as per default logic)
-        return new CodeConfiguration(selectedRotorIDs, selectedPositions, selectedReflectorID, "");
+        return new CodeConfiguration(selectedRotorIDs, selectedPositions, selectedReflectorID, selectedPlugs);
     }
 
     // Shuffles all available rotor IDs and picks the first count IDs
