@@ -122,14 +122,17 @@ public class ConsoleApp {
     // Command 3: Collects rotor IDs, positions, and reflector ID from the user
     private void handleManualCode() {
         try {
+
             MachineSpecs specs = engine.getMachineSpecs();
             int requiredRotors = engine.getRequiredRotorCount();
             int totalRotors = specs.getTotalRotors();
 
+
             String rotorIDs = inputCollector.readValidRotorIDs(requiredRotors, totalRotors);
             String positions = inputCollector.readValidPositions(requiredRotors);
-            int reflectorNum = inputCollector.readValidReflectorID();
-            String plugs = inputCollector.readValidPlugs();
+
+            int reflectorNum = inputCollector.readValidReflectorID(specs.getExistingReflectorIds());
+            String plugs = inputCollector.readValidPlugs(specs.getAbc());
 
             String result = engine.setManualCode(rotorIDs, positions, reflectorNum, plugs);
             System.out.println("Code set successfully: " + result);

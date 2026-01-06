@@ -25,7 +25,8 @@ public class EnigmaException extends RuntimeException {
         XML_ROTOR_DUPLICATE_LEFT("Error: Rotor %d maps target char '%s' more than once (Target Duplicate)."),
         XML_REFLECTOR_ID_SEQUENCE("Error: Reflector IDs must be unique and sequential (I to N)."),
         XML_REFLECTOR_UNKNOWN_ID("Error: Unknown reflector ID: %s."),
-
+        USER_REFLECTOR_OUT_OF_RANGE("Error: The machine only has %d reflectors defined. You cannot select %d."),
+        USER_REFLECTOR_ID_NOT_IN_MACHINE("Error: Reflector ID %d is not available in the machine. Available IDs: %s"),
         // ------------------------- Rotor Component Errors -------------------------
         ROTOR_MAPPING_MISSING("Error: Rotor mapping cannot be null or empty."),
         ROTOR_NOTCH_OUT_OF_RANGE("Error: Notch position %d out of range (valid: 0..%d)."),
@@ -46,7 +47,10 @@ public class EnigmaException extends RuntimeException {
         KEYBOARD_INVALID_CHAR("Error: Character '%s' is not part of this Keyboard."),
         KEYBOARD_OUT_OF_RANGE("Error: Index %d is out of range (0..%d)."),
         INPUT_INVALID_CHARACTER("Error: Input contains invalid character: '%s'.\nThe machine only accepts: %s"),
-
+        USER_PLUG_ODD_LENGTH("Invalid plugs: The input length must be even (pairs of characters)."),
+        USER_PLUG_INVALID_CHAR("Invalid plug: Character is not in the machine alphabet."),
+        USER_PLUG_SELF_MAPPING("Invalid plug: Cannot connect character '%c' to itself."),
+        USER_PLUG_ALREADY_USED("Invalid plug: Character '%c' is already used in another pair."),
         // ------------------------- User Configuration Errors -------------------------
         USER_INPUT_EMPTY("Error: Input cannot be empty."),
         USER_INPUT_NOT_NUMBER("Error: Invalid input. Please enter a numeric value."),

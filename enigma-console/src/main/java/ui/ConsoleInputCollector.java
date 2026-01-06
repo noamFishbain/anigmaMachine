@@ -2,9 +2,7 @@ package ui;
 
 import logic.exceptions.EnigmaException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * Responsible for collecting and validating raw user input
@@ -142,13 +140,20 @@ public class ConsoleInputCollector {
         }
     }
 
-    public int readValidReflectorID() {
+    public int readValidReflectorID(List<Integer> availableIDs) {
         while (true) {
             System.out.println("Enter Reflector ID (1=I, 2=II, 3=III, 4=IV, 5=V): ");
             int input = ConsoleInputReader.readInt(scanner);
             try {
                 if (input < 1 || input > 5) {
                     throw new EnigmaException(EnigmaException.ErrorCode.USER_INVALID_REFLECTOR_INPUT);
+                }
+                if (!availableIDs.contains(input)) {
+                    throw new EnigmaException(
+                            EnigmaException.ErrorCode.USER_REFLECTOR_ID_NOT_IN_MACHINE,
+                            input,
+                            availableIDs.toString()
+                    );
                 }
                 return input;
             }
@@ -159,21 +164,58 @@ public class ConsoleInputCollector {
     }
 
     // Reads plugboard settings from the user
-    public String readValidPlugs() {
+    public String readValidPlugs(String machineABC) {
         while (true) {
-            System.out.println("Enter plug pairs without separation (e.g. ABZD: Means A<->B, Z<->D) or press Enter to skip:");
+            System.out.println("Enter plug pairs without separation (e.g. ABZD) or press Enter to skip:");
             String input = ConsoleInputReader.readLine(scanner).trim().toUpperCase();
 
             if (input.isEmpty()) {
                 return "";
             }
 
-            // Checks for even length
-            if (input.length() % 2 != 0) {
-                System.out.println("Error: Plugs string must be of even length (pairs).");
-                continue;
+            try {
+                // 1. Check Even Length
+                if (input.length() % 2 != 0) {
+                    throw new EnigmaException(EnigmaException.ErrorCode.USER_PLUG_ODD_LENGTH);
+                }
+
+                // Used to track characters we've already seen in the plugs
+                Set<Character> usedChars = new HashSet<>();
+
+                // Iterate over pairs
+                for (int i = 0; i < input.length(); i += 2) {
+                    char c1 = input.charAt(i);
+                    char c2 = input.charAt(i + 1);
+
+                    // 2. Check Valid Characters against Machine ABC
+                    if (machineABC.indexOf(c1) == -1) {
+                        throw new EnigmaException(EnigmaException.ErrorCode.USER_PLUG_INVALID_CHAR, c1);
+                    }
+                    if (machineABC.indexOf(c2) == -1) {
+                        throw new EnigmaException(EnigmaException.ErrorCode.USER_PLUG_INVALID_CHAR, c2);
+                    }
+
+                    // 3. Check Self Mapping (e.g. 'AA')
+                    if (c1 == c2) {
+                        throw new EnigmaException(EnigmaException.ErrorCode.USER_PLUG_SELF_MAPPING, c1);
+                    }
+
+                    // 4. Check Duplicates (e.g. 'ABAC' -> A is used twice)
+                    if (!usedChars.add(c1)) {
+                        throw new EnigmaException(EnigmaException.ErrorCode.USER_PLUG_ALREADY_USED, c1);
+                    }
+                    if (!usedChars.add(c2)) {
+                        throw new EnigmaException(EnigmaException.ErrorCode.USER_PLUG_ALREADY_USED, c2);
+                    }
+                }
+
+                // If we got here, input is completely valid
+                return input;
+
+            } catch (EnigmaException e) {
+                System.out.println(e.getMessage());
             }
-            return input;
         }
     }
+
 }

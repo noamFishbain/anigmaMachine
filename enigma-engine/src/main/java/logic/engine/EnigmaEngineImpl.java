@@ -96,11 +96,11 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     // Returns a summary of the machine's runtime state and configuration details
     @Override
     public MachineSpecs getMachineSpecs() {
-        if (machine == null) {
-            // Return empty specs if no machine is loaded
-            return new MachineSpecs(0, 0, 0, "", "",0);
+        ensureMachineLoaded();
+        List<Integer> availableReflectors = new ArrayList<>();
+        for (String romanId : machine.getAllAvailableReflectors().keySet()) {
+            availableReflectors.add(convertRomanToInt(romanId));
         }
-
         // Create and return the DTO
         return new MachineSpecs(
                 machine.getAllRotorsCount(),
@@ -108,7 +108,9 @@ public class EnigmaEngineImpl implements EnigmaEngine {
                 machine.getProcessedMessages(),
                 CodeFormatter.formatCode(machine, originalCode),
                 CodeFormatter.formatCode(machine, currentCode),
-                machine.getRotorsCount()
+                machine.getRotorsCount(),
+                machine.getKeyboard().asString(),
+                availableReflectors
         );
     }
 
@@ -166,7 +168,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
     }
     @Override
     public int getRequiredRotorCount(){
-        if (machine == null) return 0;
+        ensureMachineLoaded();
         // Return dynamic count
         return machine.getRotorsCount();
     }
@@ -222,6 +224,7 @@ public class EnigmaEngineImpl implements EnigmaEngine {
 
     @Override
     public void saveGame(String pathWithoutExtension) throws IOException {
+        ensureMachineLoaded();
         // Add binary extension to the file path
         String fullPath = pathWithoutExtension + ".dat";
 
@@ -301,6 +304,16 @@ public class EnigmaEngineImpl implements EnigmaEngine {
                         INPUT_INVALID_CHARACTER,
                         c,machine.getKeyboard().getABC());
             }
+        }
+    }
+    private int convertRomanToInt(String roman) {
+        switch (roman) {
+            case "I": return 1;
+            case "II": return 2;
+            case "III": return 3;
+            case "IV": return 4;
+            case "V": return 5;
+            default: return 0; // לא אמור לקרות
         }
     }
 
