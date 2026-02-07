@@ -1,5 +1,6 @@
 package logic.engine;
 
+import java.io.Serializable;
 import logic.engine.utils.AutomaticCodeGenerator;
 import logic.engine.utils.CodeFormatter;
 import logic.engine.utils.InputParser;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
  * Implementation of the EnigmaEngine interface.
  * This class coordinates between the UI and the internal EnigmaMachine model.
  */
-public class EnigmaEngineImpl implements EnigmaEngine {
+public class EnigmaEngineImpl implements EnigmaEngine, Serializable {
     private Machine machine; // Runtime machine instance used to actually process text
     private CodeConfiguration originalCode; // The code that was last chosen by the user (manual/automatic)
     private CodeConfiguration currentCode; // The code after rotor stepping during processing
@@ -33,6 +34,18 @@ public class EnigmaEngineImpl implements EnigmaEngine {
         this.machine = null;
         this.parser = new InputParser();
         this.autoGenerator = new AutomaticCodeGenerator();
+    }
+
+    // For ex3
+    public EnigmaEngineImpl(Machine machine) {
+        this.machine = machine;
+        this.parser = new InputParser();
+        this.autoGenerator = new AutomaticCodeGenerator();
+        this.validator = new EnigmaCodeValidator(this.machine);
+
+        this.originalCode = null;
+        this.currentCode = null;
+        this.historyList.clear();
     }
 
     @Override

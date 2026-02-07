@@ -12,6 +12,7 @@
     <module>enigma-loader</module>
     <module>enigma-engine</module>
     <module>enigma-console</module>
+    <module>enigma-app</module>
 </modules>
 
     <properties>

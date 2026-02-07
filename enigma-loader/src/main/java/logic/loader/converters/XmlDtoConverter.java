@@ -35,7 +35,7 @@ public class XmlDtoConverter implements Serializable {
         }
 
         // Get required rotors count
-        int requiredRotorsCount = bteEnigma.getRotorsCount();
+        int requiredRotorsCount = bteEnigma.getRotorsCount().intValue();
 
         // Build the final Descriptor
         MachineDescriptor descriptor = new MachineDescriptor(
@@ -45,6 +45,8 @@ public class XmlDtoConverter implements Serializable {
                 abc,
                 ""
         );
+
+        descriptor.setName(bteEnigma.getName());
 
         return new MachineImpl(descriptor);
     }

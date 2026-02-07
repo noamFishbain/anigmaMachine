@@ -55,4 +55,16 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
         return (BTEEnigma) u.unmarshal(in);
     }
 
+    // Loads directly from an InputStream (uploaded file)
+    public Machine load(InputStream inputStream) throws Exception {
+        // JAXB Unmarshalling: Convert stream to auto-generated Java objects
+        BTEEnigma bteEnigma = deserializeFromXML(inputStream);
+
+        // Logic Validation
+        validator.validateMachineSpecs(bteEnigma);
+
+        // Object Conversion: Convert JAXB objects to Domain objects
+        return converter.createMachineFromBTE(bteEnigma);
+    }
+
 }

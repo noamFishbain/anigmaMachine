@@ -43,4 +43,5 @@ public interface Machine {
 
     public int getRotorsCount();
 
+    String getName();
 }

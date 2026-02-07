@@ -16,6 +16,7 @@ public class MachineDescriptor implements Serializable {
     private final List<ReflectorDescriptor> reflectors;
     private final int rotorsCount;
     private final String plugs;
+    private String name;
 
     public MachineDescriptor(int rotorsCount, List<RotorDescriptor> rotors,
                              List<ReflectorDescriptor> reflectors, String alphabet, String plugs) {
@@ -46,5 +47,14 @@ public class MachineDescriptor implements Serializable {
     }
 
     public String getPlugs() {
-        return plugs; }
+        return plugs;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }

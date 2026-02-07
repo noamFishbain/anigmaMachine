@@ -10,6 +10,7 @@
         <module name="enigma-console" />
         <module name="enigma-engine" />
         <module name="enigma-machine" />
+        <module name="enigma-app" />
         <module name="enigma-dto" />
         <module name="enigma-loader" />
       </profile>

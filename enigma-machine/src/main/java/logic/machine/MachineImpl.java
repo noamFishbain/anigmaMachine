@@ -22,6 +22,7 @@ public class MachineImpl implements Machine, Serializable {
     private final CodeFormatter formatter;
     private final Plugboard plugboard; // Used for swapping characters before and after the rotors
     private final int rotorsCount;
+    private final String name;
 
     // Main constructor from XML Descriptor
     public MachineImpl(MachineDescriptor descriptor) {
@@ -34,7 +35,7 @@ public class MachineImpl implements Machine, Serializable {
         this.formatter = new CodeFormatter(this.allAvailableRotors, this.keyboard);
         this.plugboard = new PlugboardImpl();
         this.rotorsCount = descriptor.getRotorsCount();
-
+        this.name = descriptor.getName();
 
         // Load Rotors
         loadRotors(descriptor.getRotors());
@@ -324,5 +325,10 @@ public class MachineImpl implements Machine, Serializable {
     @Override
     public int getRotorsCount() {
         return this.rotorsCount;
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 }

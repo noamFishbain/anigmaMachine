@@ -26,7 +26,7 @@ public class XmlValidationRules {
 
     //Validates that rotors-count is within valid range
     private void validateRotorsCount(BTEEnigma enigma) throws Exception {
-        int count = enigma.getRotorsCount();
+        int count = enigma.getRotorsCount().intValue();
         int definedRotors = enigma.getBTERotors().getBTERotor().size();
 
         if (count < 1) {
