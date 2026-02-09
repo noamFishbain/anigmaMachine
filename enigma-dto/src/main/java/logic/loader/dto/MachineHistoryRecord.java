@@ -27,4 +27,20 @@ public class MachineHistoryRecord implements Serializable {
                 appliedConfiguration, input, output, timeElapsed
         );
     }
+
+    public String getInput() {
+        return input;
+    }
+
+    public String getOutput() {
+        return output;
+    }
+
+    public long getTimeElapsed() {
+        return timeElapsed;
+    }
+
+    public String getAppliedConfiguration() {
+        return appliedConfiguration;
+    }
 }

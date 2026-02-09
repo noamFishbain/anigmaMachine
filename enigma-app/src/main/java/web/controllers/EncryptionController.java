@@ -1,12 +1,15 @@
 package web.controllers;
 
 import logic.engine.EnigmaEngine;
+import logic.loader.dto.MachineHistoryRecord;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import web.dto.ProcessDTO;
 import web.service.SessionManager;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -49,5 +52,24 @@ public class EncryptionController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", e.getMessage()));
         }
+    }
+
+    // Handles GET requests to retrieve the machine's processing history
+    @GetMapping(value = "/history", produces = "application/json")
+    public ResponseEntity<Object> getHistory(@RequestParam("sessionID") String sessionID) {
+
+        // Retrieve the engine
+        EnigmaEngine engine = sessionManager.getEngine(sessionID);
+
+        if (engine == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Unknown sessionID: " + sessionID));
+        }
+
+        // Get history list from the engine
+        List<MachineHistoryRecord> history = engine.getHistory();
+
+        // Return the list (or empty list if null)
+        return ResponseEntity.ok(history != null ? history : Collections.emptyList());
     }
 }
