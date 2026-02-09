@@ -330,4 +330,24 @@ public class EnigmaEngineImpl implements EnigmaEngine, Serializable {
         }
     }
 
+    @Override
+    public int getAllRotorsCount() {
+        if (machine == null)
+            return 0;
+        return machine.getAllRotorsCount();
+    }
+
+    @Override
+    public int getAllReflectorsCount() {
+        if (machine == null)
+            return 0;
+        return machine.getAllReflectorsCount();
+    }
+
+    @Override
+    public int getProcessedMessages() {
+        if (machine == null)
+            return 0;
+        return machine.getProcessedMessages();
+    }
 }

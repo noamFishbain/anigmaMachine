@@ -44,5 +44,7 @@ public interface EnigmaEngine {
     void loadGame(String pathWithoutExtension) throws IOException, ClassNotFoundException;
     void saveGame(String pathWithoutExtension) throws IOException;
     boolean isCodeConfigurationSet();
-
+    int getAllRotorsCount();
+    int getAllReflectorsCount();
+    int getProcessedMessages();
 }
