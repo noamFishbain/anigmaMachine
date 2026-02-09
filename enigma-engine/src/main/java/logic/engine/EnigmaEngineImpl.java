@@ -79,6 +79,13 @@ public class EnigmaEngineImpl implements EnigmaEngine, Serializable {
     // Parses the raw strings, converts reflector ID, validates all rules, and returns a CodeConfiguration DTO.
     private CodeConfiguration parseAndValidateManualInput(String rotorIDsString, String positionsString, int reflectorNum, String plugs) throws Exception {
 
+        if (this.parser == null) {
+            this.parser = new InputParser();
+        }
+        if (this.validator == null) {
+            this.validator = new EnigmaCodeValidator(this.machine);
+        }
+
         // Parsing and Basic Conversion
         List<Integer> rotorIDs = parser.parseRotorIDs(rotorIDsString);
         String reflectorID = parser.convertIntToRoman(reflectorNum);
@@ -100,6 +107,10 @@ public class EnigmaEngineImpl implements EnigmaEngine, Serializable {
     @Override
     public void setAutomaticCode() {
         ensureMachineLoaded();
+
+        if (autoGenerator == null) {
+            autoGenerator = new AutomaticCodeGenerator();
+        }
 
         CodeConfiguration autoConfig = autoGenerator.generate(machine);
 
