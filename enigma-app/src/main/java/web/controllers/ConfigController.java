@@ -109,4 +109,37 @@ public class ConfigController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
+    // Handles POST requests to reset the machine to its original configuration
+    @PostMapping(value = "/reset", produces = "application/json")
+    public ResponseEntity<Object> resetMachine(@RequestParam("sessionID") String sessionID) {
+
+        // Retrieve the engine
+        EnigmaEngine engine = sessionManager.getEngine(sessionID);
+
+        // Validate session
+        if (engine == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Unknown sessionID: " + sessionID));
+        }
+
+        try {
+            // Perform the reset in the engine
+            engine.reset();
+
+            // Get the current (reset) code to show the user
+            MachineSpecs specs = engine.getMachineSpecs();
+            String currentCode = specs.getCurrentCodeCompact();
+
+            // Return success response
+            return ResponseEntity.ok(Map.of(
+                    "status", "Machine reset successfully",
+                    "currentCode", currentCode
+            ));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
 }
