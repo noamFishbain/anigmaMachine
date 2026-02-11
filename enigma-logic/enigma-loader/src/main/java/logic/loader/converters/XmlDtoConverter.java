@@ -105,4 +105,22 @@ public class XmlDtoConverter implements Serializable {
         }
         return new ReflectorDescriptor(bteRef.getId(), pairs);
     }
+
+    public MachineDescriptor convertToDescriptor(BTEEnigma bteEnigma) {
+        String abc = bteEnigma.getABC().trim();
+
+        // Reusing your existing logic to get rotor descriptors
+        List<RotorDescriptor> rotorDescriptors = getRotorDescriptors(bteEnigma, abc);
+
+        // Reusing your existing logic to get reflector descriptors
+        List<ReflectorDescriptor> reflectorDescriptors = new ArrayList<>();
+        for (BTEReflector bteRef : bteEnigma.getBTEReflectors().getBTEReflector()) {
+            reflectorDescriptors.add(createReflectorDescriptor(bteRef));
+        }
+
+        int requiredRotorsCount = bteEnigma.getRotorsCount().intValue();
+
+        // Return the descriptor (the 'plugs' field is empty string for now as it's a static machine definition)
+        return new MachineDescriptor(requiredRotorsCount, rotorDescriptors, reflectorDescriptors, abc, "");
+    }
 }

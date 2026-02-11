@@ -8,6 +8,7 @@ import logic.exceptions.EnigmaException;
 import logic.loader.converters.XmlDtoConverter;
 import logic.loader.validation.XmlValidationRules;
 import logic.machine.Machine;
+import logic.loader.dto.MachineDescriptor;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -67,4 +68,16 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
         return converter.createMachineFromBTE(bteEnigma);
     }
 
+    // Add this method to XmlMachineConfigLoader.java
+    public MachineDescriptor loadDescriptor(InputStream inputStream) throws Exception {
+        // 1. Deserialize (uses your existing private method)
+        // Note: Since deserializeFromXML is private, make sure this method is in the same class
+        BTEEnigma bteEnigma = deserializeFromXML(inputStream);
+
+        // 2. Validate (uses your existing validator)
+        validator.validateMachineSpecs(bteEnigma);
+
+        // 3. Convert to DTO instead of full Machine logic object
+        return converter.convertToDescriptor(bteEnigma);
+    }
 }
