@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Manages active user sessions.
+ * Each session is assigned a unique ID and a private copy of an Enigma Engine.
+ */
 @Service
 public class SessionManager {
 
