@@ -4,6 +4,8 @@ import logic.engine.EnigmaEngine;
 import logic.engine.EnigmaEngineImpl;
 import logic.loader.XmlMachineConfigLoader;
 import logic.machine.Machine;
+import logic.machine.MachineImpl;
+import logic.loader.dto.MachineDescriptor;
 import org.springframework.stereotype.Service;
 import java.io.*;
 import java.io.InputStream;
@@ -20,27 +22,50 @@ public class EngineManager {
     // Map to store multiple engines using the machine name as the key
     private final Map<String, EnigmaEngine> engines = new ConcurrentHashMap<>();
 
+    // Service for handling Database operations (Postgres)
+    private final DBStorageService dbStorageService;
+
+    public EngineManager(DBStorageService dbStorageService) {
+        this.dbStorageService = dbStorageService;
+    }
+
     // Loads a machine from an XML input stream
-    public String loadEngine(InputStream fileContent) throws Exception {
+    public String loadEngine(InputStream fileContent, String fileName) throws Exception {
         // Initialize the loader
         XmlMachineConfigLoader loader = new XmlMachineConfigLoader();
 
-        // Load the machine from the stream
-        Machine machine = loader.load(fileContent);
+        // Load the machine descriptor
+        MachineDescriptor descriptor = loader.loadDescriptor(fileContent);
 
         // Get the machine name
-        String machineName = machine.getName();
+        String machineName = descriptor.getName();
+
+        if (machineName == null || machineName.trim().isEmpty()) {
+            machineName = fileName != null ? fileName.replace(".xml", "") : "Unknown_Machine_" + System.currentTimeMillis();
+            descriptor.setName(machineName); // Update descriptor so DB gets the name too
+        }
 
         // Check if a machine with this name already exists
         if (engines.containsKey(machineName)) {
             throw new IllegalArgumentException("A machine with the name '" + machineName + "' already exists");
         }
 
+        // Try to save the machine to the DB
+        try {
+            dbStorageService.saveMachine(descriptor);
+        } catch (Exception e) {
+            System.out.println("Warning: Failed to save to DB (maybe duplicate?): " + e.getMessage());
+        }
+
+        // Create the physical machine instance from the descriptor
+        Machine machine = new MachineImpl(descriptor);
+
         // Create a new Engine instance with this machine
         EnigmaEngine newEngine = new EnigmaEngineImpl(machine);
 
         // Store the engine
         engines.put(machineName, newEngine);
+
         System.out.println("Successfully loaded machine: " + machineName);
         return machineName;
     }

@@ -30,7 +30,7 @@ public class LoaderController {
         for (MultipartFile file : files) {
             try {
                 // Pass the file input stream to the service layer
-                String loadedMachineName = engineManager.loadEngine(file.getInputStream());
+                String loadedMachineName = engineManager.loadEngine(file.getInputStream(), file.getOriginalFilename());
                 result.append("File '").append(file.getOriginalFilename())
                         .append("' loaded successfully as machine: ").append(loadedMachineName).append("\n");
             } catch (IllegalArgumentException e) {
