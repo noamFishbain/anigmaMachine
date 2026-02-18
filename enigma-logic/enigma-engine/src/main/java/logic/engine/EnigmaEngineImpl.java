@@ -361,4 +361,10 @@ public class EnigmaEngineImpl implements EnigmaEngine, Serializable {
             return 0;
         return machine.getProcessedMessages();
     }
+
+    @Override
+    public String getMachineName() {
+        ensureMachineLoaded();
+        return this.machine.getName();
+    }
 }

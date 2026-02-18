@@ -12,4 +12,7 @@ public interface ProcessingRepository extends JpaRepository<ProcessingEntity, UU
 
     // Finds all processing records for a specific session
     List<ProcessingEntity> findBySessionId(String sessionId);
+
+    // Retrieves all processing history records associated with a specific machine name
+    List<ProcessingEntity> findAllByMachine_Name(String machineName);
 }

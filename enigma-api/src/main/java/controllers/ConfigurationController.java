@@ -10,43 +10,48 @@ import service.SessionManager;
 import dto.EnigmaConfigDTO;
 
 import java.util.Map;
+import static utils.ConfigurationUtils.decodeRoman;
 
 @RestController
 @RequestMapping("/enigma/config") // Base URL: http://localhost:8080/enigma/config
-public class ConfigController {
+public class ConfigurationController {
 
     private final SessionManager sessionManager;
 
-    public ConfigController(SessionManager sessionManager) {
+    public ConfigurationController(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
     }
 
-    // Handles GET requests to retrieve machine configuration details
-    @GetMapping
-    public ResponseEntity<Object> getMachineConfig(@RequestParam("sessionID") String sessionID) {
+    // GET /enigma/config - Returns machine status
+    @GetMapping(produces = "application/json")
+    public ResponseEntity<Object> getMachineConfig(
+            @RequestParam("sessionID") String sessionID,
+            @RequestParam(value = "verbose", defaultValue = "false") boolean verbose) {
 
-        // Retrieve the specific engine instance for this session
         EnigmaEngine engine = sessionManager.getEngine(sessionID);
 
-        // Validate if the session exists
         if (engine == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", "Unknown sessionID: " + sessionID));
         }
 
-        // Create the DTO with the current machine statistics
         EnigmaConfigDTO response = new EnigmaConfigDTO(
-                engine.getAllRotorsCount(),      // Total available rotors in the inventory
-                engine.getAllReflectorsCount(),  // Total available reflectors
-                engine.getProcessedMessages()    // Count of messages processed so far (starts at 0)
+                engine.getAllRotorsCount(),
+                engine.getAllReflectorsCount(),
+                engine.getProcessedMessages()
         );
 
-        // Return the response with HTTP 200 OK
+        if (verbose) {
+            MachineSpecs specs = engine.getMachineSpecs();
+            response.originalCodeCompact = specs.getOriginalCodeCompact();
+            response.currentRotorsPositionCompact = specs.getCurrentCodeCompact();
+        }
+
         return ResponseEntity.ok(response);
     }
 
-    // Handles POST requests to generate and set an automatic machine code
-    @PostMapping(value = "/automatic", produces = "application/json")
+    // Handles PUT requests to generate and set an automatic machine code
+    @PutMapping(value = "/automatic", produces = "application/json")
     public ResponseEntity<Object> setAutomaticCode(@RequestParam("sessionID") String sessionID) {
 
         // Retrieve the engine instance associated with the session ID
@@ -73,11 +78,11 @@ public class ConfigController {
         }
     }
 
-    // Handles POST requests to set the machine configuration manually
-    @PostMapping(value = "/manual", produces = "application/json")
-    public ResponseEntity<Object> setManualCode(
-            @RequestParam("sessionID") String sessionID,
-            @RequestBody ManualConfigDTO manualConfig) {
+    // Handles PUT requests to set the machine configuration manually
+    @PutMapping(value = "/manual", produces = "application/json")
+    public ResponseEntity<Object> setManualCode(@RequestBody ManualConfigDTO manualConfig) {
+
+        String sessionID = manualConfig.getSessionID();
 
         // Retrieve the engine instance associated with the session ID
         EnigmaEngine engine = sessionManager.getEngine(sessionID);
@@ -89,18 +94,23 @@ public class ConfigController {
         }
 
         try {
-            // Invoke the engine to set the manual configuration.
-            String configuredCode = engine.setManualCode(
-                    manualConfig.getRotors(),
-                    manualConfig.getPositions(),
-                    manualConfig.getReflector(),
-                    manualConfig.getPlugs()
-            );
+            String rotorsStr = manualConfig.getRotors().stream()
+                    .map(r -> String.valueOf(r.rotorNumber))
+                    .collect(java.util.stream.Collectors.joining(","));
 
-            return ResponseEntity.ok(Map.of(
-                    "status", "Code configured successfully",
-                    "machineCode", configuredCode
-            ));
+            String positionsStr = manualConfig.getRotors().stream()
+                    .map(r -> r.rotorPosition)
+                    .collect(java.util.stream.Collectors.joining(""));
+
+            String plugsStr = manualConfig.getPlugs().stream()
+                    .map(p -> p.plug1 + p.plug2)
+                    .collect(java.util.stream.Collectors.joining(""));
+
+            int reflectorInt = decodeRoman(manualConfig.getReflector());
+
+            String configuredCode = engine.setManualCode(rotorsStr, positionsStr, reflectorInt, plugsStr);
+
+            return ResponseEntity.ok(Map.of("status", "Code configured successfully", "machineCode", configuredCode));
 
         } catch (Exception e) {
             // Handle any logic/validation errors thrown by the engine
@@ -109,8 +119,8 @@ public class ConfigController {
         }
     }
 
-    // Handles POST requests to reset the machine to its original configuration
-    @PostMapping(value = "/reset", produces = "application/json")
+    // Handles PUT requests to reset the machine to its original configuration
+    @PutMapping(value = "/reset", produces = "application/json")
     public ResponseEntity<Object> resetMachine(@RequestParam("sessionID") String sessionID) {
 
         // Retrieve the engine

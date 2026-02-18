@@ -47,4 +47,5 @@ public interface EnigmaEngine {
     int getAllRotorsCount();
     int getAllReflectorsCount();
     int getProcessedMessages();
+    String getMachineName();
 }

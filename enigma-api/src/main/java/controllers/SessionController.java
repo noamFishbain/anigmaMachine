@@ -42,4 +42,16 @@ public class SessionController {
         // Return the new Session ID to the client
         return ResponseEntity.ok(Map.of("sessionID", sessionId));
     }
+
+    // Deletes a session
+    @DeleteMapping
+    public ResponseEntity<Object> deleteSession(@RequestParam("sessionID") String sessionID) {
+        if (!sessionManager.isSessionExists(sessionID)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Unknown sessionID: " + sessionID));
+        }
+
+        sessionManager.removeSession(sessionID);
+        return ResponseEntity.noContent().build();
+    }
 }
