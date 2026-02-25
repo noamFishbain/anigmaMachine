@@ -51,7 +51,13 @@ public class HistoryController {
             }
 
             // Fetch history list from the engine instance
-            return ResponseEntity.ok(engine.getHistory() != null ? engine.getHistory() : Collections.emptyList());
+            List<MachineHistoryRecord> rawHistory = engine.getHistory() != null ? engine.getHistory() : Collections.emptyList();
+
+            // Group the session history by the applied configuration string
+            Map<String, List<MachineHistoryRecord>> groupedSessionHistory = rawHistory.stream()
+                    .collect(Collectors.groupingBy(MachineHistoryRecord::getAppliedConfiguration));
+
+            return ResponseEntity.ok(groupedSessionHistory);
         }
 
         // Case B: Machine History (Database)
@@ -59,16 +65,19 @@ public class HistoryController {
             // Fetch records from DB and map them to the DTO format
             List<ProcessingEntity> dbRecords = processingRepository.findAllByMachine_Name(machineName);
 
-            List<MachineHistoryRecord> history = dbRecords.stream()
-                    .map(entity -> new MachineHistoryRecord(
-                            entity.getInput(),
-                            entity.getOutput(),
-                            entity.getTime(),
-                            entity.getCode()
-                    ))
-                    .collect(Collectors.toList());
+// Group the database records by the code column and map to DTO
+            Map<String, List<MachineHistoryRecord>> groupedMachineHistory = dbRecords.stream()
+                    .collect(Collectors.groupingBy(
+                            ProcessingEntity::getCode,
+                            Collectors.mapping(entity -> new MachineHistoryRecord(
+                                    entity.getInput(),
+                                    entity.getOutput(),
+                                    entity.getTime(),
+                                    entity.getCode()
+                            ), Collectors.toList())
+                    ));
 
-            return ResponseEntity.ok(history);
+            return ResponseEntity.ok(groupedMachineHistory);
         }
 
         return ResponseEntity.badRequest().build();

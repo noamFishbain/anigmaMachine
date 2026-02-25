@@ -120,7 +120,13 @@ public class XmlDtoConverter implements Serializable {
 
         int requiredRotorsCount = bteEnigma.getRotorsCount().intValue();
 
-        // Return the descriptor (the 'plugs' field is empty string for now as it's a static machine definition)
-        return new MachineDescriptor(requiredRotorsCount, rotorDescriptors, reflectorDescriptors, abc, "");
+        // Create the descriptor instance
+        MachineDescriptor descriptor = new MachineDescriptor(requiredRotorsCount, rotorDescriptors, reflectorDescriptors, abc, "");
+
+        // Extract and set the machine name from the XML object
+        descriptor.setName(bteEnigma.getName());
+
+        // Return the fully populated descriptor
+        return descriptor;
     }
 }

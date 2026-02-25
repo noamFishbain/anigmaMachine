@@ -51,7 +51,7 @@ public class ConfigurationController {
     }
 
     // Handles PUT requests to generate and set an automatic machine code
-    @PutMapping(value = "/automatic", produces = "application/json")
+    @PutMapping(value = "/automatic", produces = "text/plain")
     public ResponseEntity<Object> setAutomaticCode(@RequestParam("sessionID") String sessionID) {
 
         // Retrieve the engine instance associated with the session ID
@@ -60,7 +60,7 @@ public class ConfigurationController {
         // Validate if the session exists
         if (engine == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Unknown sessionID: " + sessionID));
+                    .body("Unknown sessionID: " + sessionID);
         }
 
         try {
@@ -68,18 +68,18 @@ public class ConfigurationController {
             MachineSpecs specs = engine.getMachineSpecs();
             String generatedCode = specs.getCurrentCodeCompact();
 
-            return ResponseEntity.ok(Map.of("machineCode", generatedCode));
+            return ResponseEntity.ok("machineCode" + generatedCode);
 
         } catch (Exception e) {
 
             // Handle any errors during code generation
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Failed to set automatic code: " + e.getMessage()));
+                    .body("Failed to set automatic code: " + e.getMessage());
         }
     }
 
     // Handles PUT requests to set the machine configuration manually
-    @PutMapping(value = "/manual", produces = "application/json")
+    @PutMapping(value = "/manual", produces = "text/plain")
     public ResponseEntity<Object> setManualCode(@RequestBody ManualConfigDTO manualConfig) {
 
         String sessionID = manualConfig.getSessionID();
@@ -90,8 +90,7 @@ public class ConfigurationController {
         // Validate if the session exists (Handle "Session Not Found")
         if (engine == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Unknown sessionID: " + sessionID));
-        }
+                    .body("Unknown sessionID: " + sessionID);        }
 
         try {
             String rotorsStr = manualConfig.getRotors().stream()
@@ -110,12 +109,12 @@ public class ConfigurationController {
 
             String configuredCode = engine.setManualCode(rotorsStr, positionsStr, reflectorInt, plugsStr);
 
-            return ResponseEntity.ok(Map.of("status", "Code configured successfully", "machineCode", configuredCode));
+            return ResponseEntity.ok("Code configured successfully, machineCode:" + configuredCode);
 
         } catch (Exception e) {
             // Handle any logic/validation errors thrown by the engine
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
+                    .body("Error configuring manual code: " + e.getMessage());
         }
     }
 

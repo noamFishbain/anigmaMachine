@@ -56,9 +56,9 @@ public class ProcessController {
             MachineSpecs specs = engine.getMachineSpecs();
 
             String machineName = engine.getMachineName();
-
+            System.out.println("DEBUG in Process: Engine thinks its name is -> [" + machineName + "]");
             MachineEntity machineEntity = machineRepository.findByName(machineName)
-                    .orElseThrow(() -> new RuntimeException("Machine not found in DB"));
+                    .orElseThrow(() -> new RuntimeException("Machine '" + machineName + "' not found in DB"));
 
             ProcessingEntity entity = new ProcessingEntity(
                     UUID.randomUUID(),

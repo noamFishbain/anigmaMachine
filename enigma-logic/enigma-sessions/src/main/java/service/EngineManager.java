@@ -44,7 +44,7 @@ public class EngineManager {
             machineName = fileName != null ? fileName.replace(".xml", "") : "Unknown_Machine_" + System.currentTimeMillis();
             descriptor.setName(machineName); // Update descriptor so DB gets the name too
         }
-
+        machineName = machineName.trim();
         // Check if a machine with this name already exists
         if (engines.containsKey(machineName)) {
             throw new IllegalArgumentException("A machine with the name '" + machineName + "' already exists");

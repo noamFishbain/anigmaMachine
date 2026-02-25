@@ -24,7 +24,7 @@ public class LoaderController {
     }
 
     // Handles file upload requests
-    @PostMapping("/load")
+    @PostMapping(value = "/load")
     public String loadMachine(@RequestParam("file") List<MultipartFile> files) {
         StringBuilder result = new StringBuilder();
         for (MultipartFile file : files) {
