@@ -40,6 +40,9 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
 
         // JAXB Unmarshalling: Convert XML file to auto-generated Java objects
         BTEEnigma bteEnigma = deserializeFromXML(new FileInputStream(file));
+        if (bteEnigma.getABC() != null) {
+            bteEnigma.setABC(bteEnigma.getABC().trim());
+        }
 
         // Logic Validation: Check against exercise rules (e.g., even ABC length)
         validator.validateMachineSpecs(bteEnigma);
@@ -60,7 +63,10 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
     public Machine load(InputStream inputStream) throws Exception {
         // JAXB Unmarshalling: Convert stream to auto-generated Java objects
         BTEEnigma bteEnigma = deserializeFromXML(inputStream);
-
+        // Clean the ABC string to remove trailing spaces or newlines
+        if (bteEnigma.getABC() != null) {
+            bteEnigma.setABC(bteEnigma.getABC().trim());
+        }
         // Logic Validation
         validator.validateMachineSpecs(bteEnigma);
 
@@ -73,7 +79,10 @@ public class XmlMachineConfigLoader implements MachineConfigLoader {
         // 1. Deserialize (uses your existing private method)
         // Note: Since deserializeFromXML is private, make sure this method is in the same class
         BTEEnigma bteEnigma = deserializeFromXML(inputStream);
-
+        // Clean the ABC string to remove trailing spaces or newlines
+        if (bteEnigma.getABC() != null) {
+            bteEnigma.setABC(bteEnigma.getABC().trim());
+        }
         // 2. Validate (uses your existing validator)
         validator.validateMachineSpecs(bteEnigma);
 
